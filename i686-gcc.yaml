@@ -1,0 +1,3 @@
+compilers:
+  - description: GCC for I686
+   match-compiler-exe: "(.*/)?i686-elf-gcc?"
