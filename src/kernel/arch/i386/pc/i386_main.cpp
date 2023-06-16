@@ -26,28 +26,6 @@
 extern "C" uint32_t kernel_start;
 extern "C" uint32_t kernel_end;
 
-__cdecl void kernel_i386_test_memory() {
-    auto address = (uint32_t*)kmalloc(5*sizeof(uint32_t)); // Alloc 2 pages
-    if(address == NULL) {
-        kernel_panic("Could not allocate memory", 5*sizeof(uint32_t));
-    }
-    address[0] = 32;
-    address[1] = 32;
-    auto address2 = (uint32_t*) kmalloc(ALIGN_4MIB*2);
-    if(address2 == NULL) {
-        kernel_panic("Could not allocate memory %i", ALIGN_4MIB*2);
-    }
-    kfree(address);
-    kfree(address2);
-
-    auto address3 = (uint32_t*) kmalloc(ALIGN_32MIB);
-    if(address3 == NULL) {
-        kernel_panic("Could not allocate memory %i", ALIGN_32MIB);
-    }
-    address3[4] = 51;
-    kfree(address3);
-}
-
 extern "C" void kernel_main();
 
 extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t* boot_page_directory, uint32_t stack_top, uint32_t stack_bottom)
