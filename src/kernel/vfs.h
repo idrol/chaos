@@ -8,7 +8,7 @@
 
 typedef uint32_t ino_t;
 typedef uint32_t dev_t;
-typedef uint32_t fd_t;
+typedef uint32_t file_descriptor_t;
 
 #define DT_UNKNOWN 0x0
 #define DT_REG     0x1
@@ -29,10 +29,10 @@ struct dirent_t {
 __cdecl int vfs_get_dir_entry(const char* path, size_t size, dirent_t entry);
 
 __cdecl int vfs_rename(const char* oldPath, const char* newPath);
-__cdecl int vfs_mkdir(const char* dirPath, )
+__cdecl int vfs_mkdir(const char* dirPath);
 
-__cdecl fd_t vfs_open(const char* path);
-__cdecl void vfs_close(fd_t fileDescriptor);
-__cdecl void vfs_read(fd_t fileDescriptor, size_t size, void* buffer);
-__cdecl void vfs_write(fd_t fileDescriptor, size_t size, void* buffer);
-__cdecl void vff_lseek(fd_t fileDescriptor, size_t offset, uint8_t seekEnum);
+__cdecl file_descriptor_t vfs_open(const char* path);
+__cdecl void vfs_close(file_descriptor_t fileDescriptor);
+__cdecl void vfs_read(file_descriptor_t fileDescriptor, size_t size, void* buffer);
+__cdecl void vfs_write(file_descriptor_t fileDescriptor, size_t size, void* buffer);
+__cdecl void vff_lseek(file_descriptor_t fileDescriptor, size_t offset, uint8_t seekEnum);
