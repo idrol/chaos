@@ -177,66 +177,100 @@ __cdecl void i386_memory_init(multiboot_info_t* mbd, uint32_t kernel_start, uint
     buddy_allocator_set_allocated(activeVirtualMemoryAllocator, 0x0, _logical_address(0x0)); // Mark first 3.5Gib unusable
 }
 
-__cdecl size_t i386_memory_alloc_page(size_t pageAlignment, size_t numPages) {
-    auto size = pageAlignment * numPages;
-    auto virtualAddressBlock = buddy_allocator_alloc_block(activeVirtualMemoryAllocator, size, ALIGN_4MIB);
-    //printf("Virtual address alloc 0x%lX alloc size: 0x%lX size: 0x%lX align: 0x%lX\n", virtualAddressBlock.startAddress, virtualAddressBlock.allocatedSize, size, ALIGN_4MIB);
-    size_t pageStartNum = virtualAddressBlock.startAddress / ALIGN_4MIB;
-    auto physicalAddressBlock = buddy_allocator_alloc_block(physicalMemoryAllocator, size, ALIGN_4MIB);
-    //printf("Physical address alloc 0x%lX alloc size: 0x%lX size: 0x%lX align: 0x%lX\n", physicalAddressBlock.startAddress, physicalAddressBlock.allocatedSize, size, ALIGN_4MIB);
-    //printf("I386 alloc page called with %zu num pages\n", numPages);
-    //printf("Size of size_t %zu\n", sizeof(size_t));
-    for(size_t i = 0; i < numPages; i++) {
-        //printf("%lu %zu | ", i, numPages);
+__cdecl void* mmap(void* addressHint, size_t size, int prot, int flags) {
+    return i386_memory_mmap(addressHint, size, prot, flags);
+}
 
-        auto pageNum = pageStartNum + i;
-        if(pageNum > 1023) {
-            printf("page num out of range 1024 numPages: %zu index: %lu pageStartNum: %i\n", numPages, i, 760);
-            while (true) {
-                asm volatile("hlt");
-            }
-        }
-        size_t physicalAddress = physicalAddressBlock.startAddress + (i * ALIGN_4MIB);
-        //printf("Mapping page %zu to physical address 0x%lX\n", pageNum, physicalAddress);
-        auto pd = &paging_get_active_page_directory()[pageNum];
+__cdecl void* i386_memory_mmap(void* addressHint, size_t size, int prot, int flags) {
+    size_t alignment = ALIGN_4KIB;
+
+    if(flags & MAP_HUGETLB) {
+        alignment = ALIGN_4MIB;
+    } else {
+        printf("mmap does not support omitting MAP_HUGETLB");
+        return nullptr;
+    }
+
+    size_t alignedSize = size - (size % alignment);
+    if(alignedSize != size) alignedSize += alignment;
+    if(addressHint != NULL) {
+        printf("Address hint for mmap not supported");
+        return nullptr;
+    }
+    // Allocate continous virtual pages
+    auto virtualBlock = buddy_allocator_alloc_block(activeVirtualMemoryAllocator, alignedSize, alignment);
+    auto startVirtualAddress = virtualBlock.startAddress;
+
+    auto physicalBlock = buddy_allocator_alloc_block(physicalMemoryAllocator, alignedSize, alignment);
+    auto startPhysicalAddress = physicalBlock.startAddress;
+
+    if(startVirtualAddress % alignment) {
+        printf("Allocation error allocated page is not aligned to page boundary");
+        return nullptr;
+    }
+    size_t numDirectories = alignedSize / alignment;
+    auto pageDirectory = paging_get_active_page_directory();
+    for(size_t i = 0; i < numDirectories; i++) {
+        auto pd = &pageDirectory[pageDirectoryIdFromAddress(startVirtualAddress, i, alignment)];
+
         if(pd->IsPresent()) {
-            printf("Page is already mapped error in buddy allocator page: %i\n", pageNum);
-            while(true) {
-                asm volatile("hlt");
-            }
+            printf("Attempting to map physical memory to already mapped page");
+            return nullptr;
         }
+
         pd->SetPresent(true);
-        pd->SetPhysical(true);
-        pd->SetWriteEnabled(true);
-        pd->SetAddress(physicalAddress);
-    }
-    return virtualAddressBlock.startAddress;
-}
 
-__cdecl void i386_memory_unmap_page(size_t startPage, size_t numPages) {
-    for(size_t pageNum = startPage; pageNum < startPage+numPages; pageNum++) {
-        auto pd = &paging_get_active_page_directory()[pageNum];
-        auto physicalAddress = pd->GetAddress();
-        pd->Clear();
-        buddy_allocator_free_block(physicalMemoryAllocator, physicalAddress, ALIGN_4MIB);
-    }
-    auto virtualStartAddress = startPage * ALIGN_4MIB;
-    buddy_allocator_free_block(activeVirtualMemoryAllocator, virtualStartAddress, numPages*ALIGN_4MIB);
-    printf("I386 free pages called with start page %zu and %zu num pages\n", startPage, numPages);
-}
+        if(flags & MAP_HUGETLB) {
+            pd->SetPhysical(true);
+        } else {
+            printf("mmap does not support omitting MAP_HUGETLB");
+            return nullptr;
+        }
 
-__cdecl void* mmap(void* addressHint, size_t size) {
-    size_t alignedSize = size - (size % ALIGN_4MIB);
-    if(alignedSize != size) alignedSize += ALIGN_4MIB;
-    auto startAddress = i386_memory_alloc_page(ALIGN_4MIB, alignedSize/ALIGN_4MIB);
-    printf("Mapped address: 0x%lX\n", startAddress);
-    return (void *)startAddress;
+        if(prot & PROT_WRITE) {
+            pd->SetWriteEnabled(true);
+        }
+
+        pd->SetAddress(startPhysicalAddress + (alignment * i));
+    }
+
+    printf("Mapped address: 0x%lX\n", startVirtualAddress);
+    return (void *)startVirtualAddress;
 }
 
 __cdecl int munmap(void* startAddress, size_t size) {
-    size_t alignedSize = size - (size % ALIGN_4MIB);
-    if(alignedSize != size) alignedSize += ALIGN_4MIB;
-    auto startPage = ((size_t)startAddress) / ALIGN_4MIB;
-    i386_memory_unmap_page(startPage, alignedSize / ALIGN_4MIB);
+    return i386_memory_munmap(startAddress, size);
+}
+
+__cdecl int i386_memory_munmap(void* startAddress, size_t size) {
+    size_t alignment = ALIGN_4MIB;
+    auto address = (uint32_t)startAddress;
+
+    if(address % alignment != 0) {
+        alignment = ALIGN_4KIB;
+        if(address % alignment != 0) {
+            return -1;
+        }
+    }
+
+    if(alignment == ALIGN_4KIB) {
+        printf("4KIB alignment not supporter in paging");
+        return -1;
+    }
+
+    size_t alignedSize = size - (size % alignment);
+    if(alignedSize != size) alignedSize += alignment;
+
+    auto pageDirectory = paging_get_active_page_directory();
+    auto numPages = alignedSize / alignment;
+    for(size_t i = 0; i < numPages; i++) {
+        auto pd = &pageDirectory[pageDirectoryIdFromAddress(address, i, alignment)];
+        if(pd->IsPresent()) {
+            pd->Clear();
+        } else {
+            return -1;
+        }
+    }
+
     return 0;
 }

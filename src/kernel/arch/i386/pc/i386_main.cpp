@@ -46,6 +46,19 @@ extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t
     i386_memory_init(mbd, (uint32_t)&kernel_start, (uint32_t)&kernel_end, boot_page_directory);
 
     i386_vga_clear();
+    printf("Testing memory");
+
+    int entries = 1024 * 1024 * 256;
+    //entries = 1024 * 256;
+    uint8_t* buffer = (uint8_t*)kmalloc(sizeof(uint8_t) * entries);
+    for(int i = 0; i < entries; i++) {
+        buffer[i] = 0xFF;
+    }
+    kfree(buffer);
+    buffer = nullptr;
+    printf("Test completed");
+
+    //i386_vga_clear();
 
     kernel_main();
 }

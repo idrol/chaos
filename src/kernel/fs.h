@@ -4,6 +4,7 @@
 #pragma once
 
 #include <file.h>
+#include <cdecl.h>
 
 #define FS_TYPE_UNKNOWN 0x0
 

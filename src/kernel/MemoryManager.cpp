@@ -45,20 +45,24 @@ void* MemoryManager::alloc(size_t size) {
     if(allocatedBlock == nullptr) {
         // We don't have a block that is large enough in virtual memory
         // Request more memory from kernel
-        size_t alignedSize = size - (size % ALIGN_4MIB);
-        if(alignedSize != size) alignedSize += ALIGN_4MIB; // Mmap follows page boundries so the size have to be aligned to page boundries
-        auto startAddress = (size_t)mmap(nullptr, alignedSize);
-        if(startAddress == 0) return nullptr;
-        allocatedBlock = this->RegisterFreeBlock(startAddress, alignedSize);
-        if(allocatedBlock == nullptr) return nullptr; // Register failed nothing more we can do
+        size_t neededSize = size + sizeof(MemoryBlock); // We also need to account for the storage for the memory block info then requesting more memory from the OS
+        size_t alignedSize = neededSize - (neededSize % ALIGN_4MIB);
+        if(alignedSize != neededSize) alignedSize += ALIGN_4MIB; // Mmap follows page boundries so the size have to be aligned to page boundries
+        auto startAddress = mmap(nullptr, alignedSize, PROT_WRITE | PROT_READ, MAP_HUGETLB);
+        if(startAddress == nullptr) return nullptr;
+        allocatedBlock = this->RegisterFreeBlock((size_t)startAddress, alignedSize);
     }
 
-    if(allocatedBlock->size < size + sizeof(MemoryBlock)) {
+    if(allocatedBlock->size == size) {
         // If we were to split the block into the allocated part and and unallocated block the unallocated block could not fit the block header and a single byte of memory and because of that we just mark the entire block as allocated
         allocated += allocatedBlock->size;
     } else {
         // We can split the unallocated memory into it's own block to allow something else to allocate it
-        MemoryBlock* unallocatedBlock = (MemoryBlock*)((size_t)allocatedBlock) + sizeof(MemoryBlock) + size;
+        /*size_t allocatedBlockAddress = (size_t)allocatedBlock;
+        size_t memBlockSize = sizeof(MemoryBlock);
+        size_t unallocatedBlockAddress = allocatedBlockAddress + memBlockSize + size;
+        MemoryBlock* unallocatedBlock = (MemoryBlock*)unallocatedBlockAddress;*/
+        MemoryBlock* unallocatedBlock = (MemoryBlock*)((size_t)allocatedBlock + sizeof(MemoryBlock) + size);
         unallocatedBlock->allocated = false;
         unallocatedBlock->prev = allocatedBlock;
         unallocatedBlock->next = allocatedBlock->next;
@@ -75,7 +79,7 @@ void* MemoryManager::alloc(size_t size) {
 
     allocatedBlock->allocated = true;
     activeAllocations++;
-    return (void*)(allocatedBlock + sizeof(MemoryBlock));
+    return (void*)((size_t)allocatedBlock + sizeof(MemoryBlock));
 }
 
 void MemoryManager::free(void* ptr) {

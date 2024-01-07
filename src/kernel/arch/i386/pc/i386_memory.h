@@ -14,4 +14,5 @@
 #define _logical_address(physical_address) (physical_address + KERNEL_SPACE)
 
 __cdecl void i386_memory_init(multiboot_info_t* mbd, uint32_t kernel_start, uint32_t kernel_end, uint32_t* boot_page_directory);
-__cdecl size_t i386_memory_alloc_page(size_t pageAlignment, size_t numPages);
+__cdecl void* i386_memory_mmap(void* addressHint, size_t size, int prot, int flags);
+__cdecl int i386_memory_munmap(void* startAddress, size_t size);

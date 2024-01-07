@@ -30,6 +30,8 @@ private:
     uint32_t data; // 32-bit bitmap
 }  __attribute__((packed));
 
+#define pageDirectoryIdFromAddress(address, pageNumOffset, pageSize) ((address+(pageSize*pageNumOffset))/pageSize)
+
 __cdecl PageDirectory* paging_kernel_page_directory;
 __cdecl PageDirectory* paging_active_page_directory;
 #else
