@@ -234,7 +234,7 @@ __cdecl void* i386_memory_mmap(void* addressHint, size_t size, int prot, int fla
         pd->SetAddress(startPhysicalAddress + (alignment * i));
     }
 
-    printf("Mapped address: 0x%lX\n", startVirtualAddress);
+    //printf("Mapped address: 0x%lX\n", startVirtualAddress);
     return (void *)startVirtualAddress;
 }
 
@@ -272,5 +272,17 @@ __cdecl int i386_memory_munmap(void* startAddress, size_t size) {
         }
     }
 
+    return 0;
+}
+
+__cdecl int test_memory(size_t testSize) {
+    printf("Testing memory of size %zu", testSize);
+
+    uint8_t* buffer = (uint8_t*)kmalloc(sizeof(uint8_t) * testSize);
+    for(size_t i = 0; i < testSize; i++) {
+        buffer[i] = 0xFF;
+    }
+    kfree(buffer);
+    printf("Test completed");
     return 0;
 }

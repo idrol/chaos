@@ -1,0 +1,14 @@
+set(KERNEL_SRCS
+    "${CMAKE_CURRENT_SOURCE_DIR}/buddy_allocator.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/memory.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/MemoryManager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/panic.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/partition.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/path.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/drivers/blockio.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/drivers/device.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/drivers/fat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/drivers/fs.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/drivers/vfs.c"
+)

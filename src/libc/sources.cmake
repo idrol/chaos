@@ -1,0 +1,10 @@
+set(CHAOS_LIBC_SRCS
+    "${CMAKE_CURRENT_SOURCE_DIR}/align.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/ctype.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/printf.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/printf_common.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/snprintf.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/sprintf.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stdio.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/string.cpp"
+)

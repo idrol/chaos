@@ -7,7 +7,7 @@
 #include <memory.h>
 
 MemoryBlock* MemoryManager::RegisterFreeBlock(size_t startAddr, size_t size) {
-    printf("Memory manager registering new block 0x%lX size 0x%lX\n", startAddr, size);
+    //printf("Memory manager registering new block 0x%lX size 0x%lX\n", startAddr, size);
     auto block = (MemoryBlock*)(startAddr);
     block->allocated = false;
     block->size = size - sizeof(MemoryBlock);

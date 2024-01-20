@@ -9,9 +9,16 @@
 #include "i386_exception.h"
 #include "i386_vga.h"
 #include "i386_memory.h"
+#include "i386_tasking.h"
 #include <memory.h>
 #include <stdio.h>
 #include <panic.h>
+#include <drivers/blockio.h>
+#include <drivers/device.h>
+#include <drivers/fat.h>
+#include <drivers/fs.h>
+#include <drivers/vfs.h>
+#include "ata.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -44,19 +51,16 @@ extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t
     i386_hal_enable_interrupts();
 
     i386_memory_init(mbd, (uint32_t)&kernel_start, (uint32_t)&kernel_end, boot_page_directory);
+    i386_tasking_init();
 
-    i386_vga_clear();
-    printf("Testing memory");
+    i386_vga_init_memory();
 
-    int entries = 1024 * 1024 * 256;
-    //entries = 1024 * 256;
-    uint8_t* buffer = (uint8_t*)kmalloc(sizeof(uint8_t) * entries);
-    for(int i = 0; i < entries; i++) {
-        buffer[i] = 0xFF;
-    }
-    kfree(buffer);
-    buffer = nullptr;
-    printf("Test completed");
+    block_init();
+    device_init();
+    fs_init();
+    fat_init();
+    vfs_init();
+    ata_init_devices();
 
     //i386_vga_clear();
 

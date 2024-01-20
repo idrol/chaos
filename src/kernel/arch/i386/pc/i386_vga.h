@@ -26,6 +26,7 @@ enum vga_color {
 };
 
 __cdecl void i386_vga_init();
+__cdecl void i386_vga_init_memory();
 __cdecl void i386_vga_clear();
 __cdecl uint8_t i386_vga_entry_color(enum vga_color fg, enum vga_color bg);
 __cdecl void i386_vga_set_color(uint8_t color);

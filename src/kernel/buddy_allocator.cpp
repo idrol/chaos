@@ -139,7 +139,7 @@ buddy_allocator_alloc_info_t buddy_allocator_alloc_block(buddy_allocator_t* allo
     uint32_t maxIndex = (allocator->num512KBlocks * (8 - i)) / 32;
     uint32_t startIndex = 0;
     uint32_t currentFreeBlocks = 0;
-    printf("Buddy alloc blockSize: %i maxIndex: %i\n", currentBlockSize, maxIndex);
+    //printf("Buddy alloc blockSize: %i maxIndex: %i\n", currentBlockSize, maxIndex);
     for(uint32_t index = 0; index < maxIndex; index++) {
         uint32_t bitmapEntry = bitmap[index];
         for(uint32_t bit = 0; bit < 32; bit++) {
@@ -175,7 +175,7 @@ buddy_allocator_alloc_info_t buddy_allocator_alloc_block(buddy_allocator_t* allo
         return {0x0, 0x0};
     }
 
-    printf("Buddy alloc allocated startIndex: %i freeBlocks: %i needed blocks %i\n", startIndex, currentFreeBlocks, neededBlocks);
+    //printf("Buddy alloc allocated startIndex: %i freeBlocks: %i needed blocks %i\n", startIndex, currentFreeBlocks, neededBlocks);
     size_t startAddress = currentBlockSize*startIndex;
     size_t size = currentFreeBlocks*currentBlockSize;
     buddy_allocator_set_allocated(allocator, startAddress, size);

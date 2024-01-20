@@ -1,0 +1,1 @@
+qemu-system-i386 -s -S -d guest_errors -no-shutdown -no-reboot -monitor stdio -m 4G -drive format=raw,media=disk,file=./build/chaos.img
