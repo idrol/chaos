@@ -13,12 +13,25 @@ void fs_init() {
     printf("Initialized fs driver\n");
 }
 
-fs_driver_t* fs_register_fs_driver(uint8_t fsType, fs_create_instance_t createInstanceFn, fs_get_dir_entry_fn_t getDirEntryFn, fs_list_directory_fn_t lsFn, fs_read_fn_t readFn, fs_write_fn_t writeFn) {
+fs_driver_t* fs_register_fs_driver(uint8_t fsType,
+                                   fs_create_instance_t createInstanceFn,
+                                   fs_openDir_fn_t openDirFn,
+                                   fs_closeDir_fn_t closeDirFn,
+                                   fs_readDir_fn_t readDirFn,
+                                   fs_rewindDir_fn_t rewindDirFn,
+                                   fs_seekDir_fn_t seekDirFn,
+                                   fs_tellDir_fn_t tellDirFn,
+                                   fs_read_fn_t readFn,
+                                   fs_write_fn_t writeFn) {
     fs_driver_t* driver = kmalloc(sizeof(fs_driver_t));
     driver->fsType = fsType;
     driver->createInstanceFn = createInstanceFn;
-    driver->getDirEntryFn = getDirEntryFn;
-    driver->listDirectoryFn = lsFn;
+    driver->openDirFn = openDirFn;
+    driver->closeDirFn = closeDirFn;
+    driver->readDirFn = readDirFn;
+    driver->rewindDirFn = rewindDirFn;
+    driver->seekDirFn = seekDirFn;
+    driver->tellDirFn = tellDirFn;
     driver->readFn = readFn;
     driver->writeFn = writeFn;
     fsDrivers[fsType] = driver;
@@ -46,26 +59,65 @@ void fs_destroy(fs_instance_t* instance) {
     kfree(instance);
 }
 
-int fs_list_directory(fs_instance_t* instance, const char* path, fs_dir_entry_t* dirEnt) {
+DIR* fs_openDir(fs_instance_t* instance, const char* dirName) {
     fs_driver_t* driver = fsDrivers[instance->fsType];
     if(driver == NULL) {
         printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return NULL;
     }
-    return driver->listDirectoryFn(instance, path, dirEnt);
+    return driver->openDirFn(instance, dirName);
 }
 
-int fs_get_dir_entry(fs_instance_t* instance, const char* path, fs_dir_entry_t* dirEnt) {
+int fs_closeDir(fs_instance_t* instance, DIR* dirPtr) {
     fs_driver_t* driver = fsDrivers[instance->fsType];
     if(driver == NULL) {
         printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return -999;
     }
-    return driver->getDirEntryFn(instance, path, dirEnt);
+    return driver->closeDirFn(instance, dirPtr);
+}
+
+fs_dir_entry_t* fs_readDir(fs_instance_t* instance, DIR* dirPtr) {
+    fs_driver_t* driver = fsDrivers[instance->fsType];
+    if(driver == NULL) {
+        printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return NULL;
+    }
+    return driver->readDirFn(instance, dirPtr);
+}
+
+void fs_rewindDir(fs_instance_t* instance, DIR* dirPtr) {
+    fs_driver_t* driver = fsDrivers[instance->fsType];
+    if(driver == NULL) {
+        printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return;
+    }
+    driver->rewindDirFn(instance, dirPtr);
+}
+
+void fs_seekDir(fs_instance_t* instance, DIR* dirPtr, uint64_t dirLocationOffset) {
+    fs_driver_t* driver = fsDrivers[instance->fsType];
+    if(driver == NULL) {
+        printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return;
+    }
+    driver->seekDirFn(instance, dirPtr, dirLocationOffset);
+}
+
+uint64_t fs_tellDir(fs_instance_t* instance, DIR* dirPtr) {
+    fs_driver_t* driver = fsDrivers[instance->fsType];
+    if(driver == NULL) {
+        printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return UINT64_MAX;
+    }
+    return driver->tellDirFn(instance, dirPtr);
 }
 
 void fs_read(fs_instance_t* instance, const char* path, size_t size, void* ptr) {
     fs_driver_t* driver = fsDrivers[instance->fsType];
     if(driver == NULL) {
         printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return;
     }
     driver->readFn(instance, path, size, ptr);
 }
@@ -74,6 +126,7 @@ void fs_write(fs_instance_t* instance, const char* path, size_t size, void* ptr)
     fs_driver_t* driver = fsDrivers[instance->fsType];
     if(driver == NULL) {
         printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
+        return;
     }
     driver->writeFn(instance, path, size, ptr);
 }

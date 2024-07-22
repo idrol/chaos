@@ -1,11 +1,31 @@
 #include <drivers/vfs.h>
+#include <drivers/thread.h>
 #include <memory.h>
 #include <stdio.h>
 #include <string.h>
 
+struct vfs_process_file_descriptors_struct {
+    
+};
+
+
+
+struct vfs_directory_stream_struct {
+    DIR* fs_directoryStream;
+    fs_instance_t* instance;
+};
+
+typedef struct vfs_directory_stream_struct vfs_directory_stream_t;
+typedef struct vfs_process_file_descriptors_struct vfs_process_file_descriptors_t;
+
+vfs_process_file_descriptors_t** processFD = NULL;
+vfs_process_file_descriptors_t* currentProcessFD = NULL;
 vfs_mount_point_t** mountPoints;
 
 void vfs_init() {
+    processFD = kmalloc(sizeof(vfs_process_file_descriptors_t*)*MAX_PROCESSES);
+    processFD[0] = kmalloc(sizeof(vfs_process_file_descriptors_t));
+    currentProcessFD = processFD[0];
     mountPoints = kmalloc(sizeof(vfs_mount_point_t*)*VFS_MAX_MOUNT_POINTS);
     for(size_t i = 0; i < VFS_MAX_MOUNT_POINTS; i++) {
         mountPoints[i] = NULL;
@@ -102,27 +122,65 @@ vfs_mount_point_t* vfs_find_mount_point(const char* path) {
             // We found a matching mountpoint
             return mountPoint;
         } else {
-            printf("Paths dont match %s %s", path, mountPoint->path);
+            printf("Paths dont match %s %s\n", path, mountPoint->path);
         }
     }
     return NULL;
 }
 
-int vfs_list_directory(const char* path, fs_dir_entry_t* dirEnt) {
-    static vfs_mount_point_t* mountPoint;
-    if(path != NULL) {
-        mountPoint = vfs_find_mount_point(path);
-        if(mountPoint == NULL) {
-            printf("Failed to find mount point for %s\n", path);
-            return FS_RET_DIRECTORY_NOT_FOUND;
-        }
-        return fs_list_directory(mountPoint->fsInstance, (char*)((size_t)(path) + mountPoint->pathLength), dirEnt);
-    }
-    return fs_list_directory(mountPoint->fsInstance, NULL, dirEnt);
+void vfs_switch_to_process() {
+
 }
 
-int vfs_get_dir_entry(const char* path, fs_dir_entry_t* dirEnt) {
-    return -1;
+DIR* vfs_openDir(const char* path) {
+    if(path == NULL) return NULL;
+    vfs_mount_point_t* mountPoint = vfs_find_mount_point(path);
+    if(mountPoint == NULL) {
+        printf("Failed to find mount point for %s\n", path);
+        return NULL;
+    }
+    const char* relativePath = (const char*)((size_t)(path) + mountPoint->pathLength);
+    DIR* directoryStream = fs_openDir(mountPoint->fsInstance, relativePath);
+
+    if(directoryStream == NULL) return NULL;
+
+    vfs_directory_stream_t* vfsDirectoryStream = kmalloc(sizeof(vfs_directory_stream_t));
+    vfsDirectoryStream->fs_directoryStream = directoryStream;
+    vfsDirectoryStream->instance = mountPoint->fsInstance;
+
+    return vfsDirectoryStream;
+}
+
+int vfs_closeDir(DIR* dirPtr) {
+    if(dirPtr == NULL) return FS_RET_BAD_DIR_PTR;
+    vfs_directory_stream_t* vfsDirectoryStream = (vfs_directory_stream_t*)dirPtr;
+    int retResult = fs_closeDir(vfsDirectoryStream->instance, vfsDirectoryStream->fs_directoryStream);
+    kfree(vfsDirectoryStream);
+    return retResult;
+}
+
+fs_dir_entry_t* vfs_readDir(DIR* dirPtr) {
+    if(dirPtr == NULL) return NULL;
+    vfs_directory_stream_t* vfsDirectoryStream = (vfs_directory_stream_t*)dirPtr;
+    return fs_readDir(vfsDirectoryStream->instance, vfsDirectoryStream->fs_directoryStream);
+}
+
+void vfs_rewindDir(DIR* dirPtr) {
+    if(dirPtr == NULL) return;
+    vfs_directory_stream_t* vfsDirectoryStream = (vfs_directory_stream_t*)dirPtr;
+    fs_rewindDir(vfsDirectoryStream->instance, vfsDirectoryStream->fs_directoryStream);
+}
+
+void vfs_seekDir(DIR* dirPtr, uint64_t dirLocationOffset) {
+    if(dirPtr == NULL) return;
+    vfs_directory_stream_t* vfsDirectoryStream = (vfs_directory_stream_t*)dirPtr;
+    fs_seekDir(vfsDirectoryStream->instance, vfsDirectoryStream->fs_directoryStream, dirLocationOffset);
+}
+
+uint64_t vfs_tellDir(DIR* dirPtr) {
+    if(dirPtr == NULL) return FS_RET_BAD_DIR_PTR;
+    vfs_directory_stream_t* vfsDirectoryStream = (vfs_directory_stream_t*)dirPtr;
+    return fs_tellDir(vfsDirectoryStream->instance, vfsDirectoryStream->fs_directoryStream);
 }
 
 void vfs_read(const char* path, size_t size, void* buffer) {

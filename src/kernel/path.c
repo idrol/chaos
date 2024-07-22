@@ -1,15 +1,16 @@
 #include "path.h"
 #include <stdio.h>
+#include <memory.h>
 
-char* path_sanetize(char* path) {
+char* path_sanitize(char* path) {
+    size_t len = strlen(path);
     size_t offset = 0;
     size_t start = 0;
     bool foundFirstChar = false;
     uint8_t lastChar = 0x0;
-    size_t len = strlen(path);
     if(len < 2) {
         if(len < 1) return NULL;
-        if(path[0] = '/') return path;
+        if(path[0] == '/') return path;
         return NULL;
     }
     while(path[offset] != 0x0) {
@@ -51,8 +52,7 @@ char* path_split(char* path) {
     static char* lastToken;
     if(lastReturnWasNull) return NULL;
     if(path != NULL) {
-        path = path_sanetize(path);
-        printf("sanetized \"%s\"\n", path);
+        path = path_sanitize(path);
         if(path[0] == '/') path = &path[1];
         lastReturnWasNull = false;
         lastToken = NULL;

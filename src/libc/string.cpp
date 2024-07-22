@@ -103,6 +103,7 @@ __cdecl int32_t strncmp(const char* str1, const char* str2, size_t count) {
         if(offset == count) return 0;
         offset++;
     }
+    if(offset == count) return 0;
     return str1[offset]-str2[offset];
 }
 
@@ -114,4 +115,9 @@ __cdecl int isspace(char c) {
     if(c == 0x0c) return 1;
     if(c == 0x0d) return 1;
     return 0;
+}
+
+__cdecl void toLower(char* str) {
+    for(char *p = str; *p; ++p)
+        *p = *p > 0x40 && *p < 0x5b ? *p | 0x60 : *p;
 }

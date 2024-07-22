@@ -111,7 +111,7 @@ bool ata_identify_drive(uint16_t port, bool isSlave, uint16_t* buffer) {
  * @param buffer 
  */
 void ata_read_sectors_pio(ata_device_entry_t* device, uint32_t lba, uint8_t sectors, uint8_t* buffer) {
-    printf("Reading lba %#08X %#02X\n", lba, sectors);
+    //printf("Reading lba %#08X %#02X\n", lba, sectors);
 	/*ata_wait_busy();
     i386_hal_io_outb(0x3F6, 0x04); // Software reset device
     io_wait();

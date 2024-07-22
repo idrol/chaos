@@ -28,3 +28,5 @@ __cdecl uint32_t strcountchar(const char* str, int c);
 __cdecl int32_t strncmp(const char* str1, const char* str2, size_t count);
 
 __cdecl int isspace(char c);
+
+__cdecl void toLower(char* str);

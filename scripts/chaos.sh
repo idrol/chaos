@@ -14,8 +14,6 @@ Usage $0 [arg]
 
     run-image (default):   Run os with qemu image
     debug-image:           Debug os with qemu image (runs cmake build in background to update binaries)
-
-	run-image: Run kernel in qemu with image
 EOF
 fi
 

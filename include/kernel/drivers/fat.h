@@ -40,8 +40,14 @@ typedef struct fat_instance_struct fat_instance_t;
 void fat_init();
 
 void* fat_create_instance(block_logical_device_t* device);
-int fat_list_directory(fs_instance_t* instance, const char* path, fs_dir_entry_t* dirEnt);
-int fat_get_directory_entry(fs_instance_t* instance, const char* path, fs_dir_entry_t* dirEnt);
+
+DIR* fat_openDir(fs_instance_t* instance, const char* dirName);
+int fat_closeDir(fs_instance_t* instance, DIR* dirPtr);
+fs_dir_entry_t* fat_readDir(fs_instance_t* instance, DIR* dirPtr);
+void fat_rewindDir(fs_instance_t* instance, DIR* dirPtr);
+void fat_seekDir(fs_instance_t* instance, DIR* dirPtr, uint64_t dirLocationOffset);
+uint64_t fat_tellDir(fs_instance_t* instance, DIR* dirPtr);
+
 void fat_read(fs_instance_t* instance, const char* path, size_t size, void* ptr);
 void fat_write(fs_instance_t* instance, const char* path, size_t size, void* ptr);
 

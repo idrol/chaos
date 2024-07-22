@@ -29,11 +29,22 @@ void vfs_unmount_device(block_logical_device_t* logicalDevice);
 bool vfs_has_mount_point(const char* path);
 const vfs_mount_point_t** vfs_list_mount_points();
 
-// Returns point the dir entry struct that is only garuanteed to be valid until the next call of vfs_ls, NULL is returned if there are no more directory entries
-int vfs_list_directory(const char* path, fs_dir_entry_t* dirEnt);
-int vfs_get_dir_entry(const char* path, fs_dir_entry_t* dirEnt);
-void vfs_read(const char* path, size_t size, void* buffer);
-void vfs_write(const char* path, size_t size, void* buffer);
+void vfs_switch_to_process(uint32_t pid);
+
+DIR* vfs_openDir(const char* dirName);
+int vfs_closeDir(DIR* dirPtr);
+fs_dir_entry_t* vfs_readDir(DIR* dirPtr);
+void vfs_rewindDir(DIR* dirPtr);
+void vfs_seekDir(DIR* dirPtr, uint64_t dirLocationOffset);
+uint64_t vfs_tellDir(DIR* dirPtr);
+
+int32_t vfs_open(const char* path, int flags);
+int32_t vfs_close(int32_t fd);
+
+size_t vfs_read(int32_t fd, void* buffer, size_t count);
+size_t vfs_write(int32_t fd, const void* buffer, size_t count);
+
+int32_t vfs_lseek(int32_t fd, int32_t offset, int whence);
 
 #ifdef __cplusplus
 }
