@@ -2,8 +2,8 @@
 
 current_directory=${PWD}
 
-cd ./scripts/
+cd ./scripts/ || exit
 
 bash chaos.sh "$@"
 
-cd "$current_directory"
+cd "$current_directory" || exit

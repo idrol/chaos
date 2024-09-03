@@ -3,10 +3,10 @@ starting_directory=${PWD}
 
 if [ ! -d "$HOME/i686_cross_compiler" ]
 then
-  git clone git@github.com:idrol/I686-elf-compiler.git $HOME/i686_cross_compiler
+  git clone git@github.com:idrol/I686-elf-compiler.git "$HOME/i686_cross_compiler"
 fi
 
-cd $HOME/i686_cross_compiler
+cd "$HOME/i686_cross_compiler" || exit
 
 missing_dependencies=0
 
@@ -31,4 +31,4 @@ then
   bash ./install.sh
 fi
 
-cd $starting_directory
+cd "$starting_directory" || exit

@@ -5,6 +5,7 @@ if ! type "i686-elf-gcc" &> /dev/null;
 then
   echo "Cannot find i686-elf-gcc compiler"
   while true; do
+    # shellcheck disable=SC2162
     read -p "Do you wish to automatically install i686-elf-gcc compiler to users home directory [Y/n] " yn
     case $yn in
       [Yy]* ) bash ./sync_dependencies.sh; break;;
@@ -33,7 +34,7 @@ EOF
 fi
 
 clean() {
-  bash ./clean.sh $1
+  bash ./clean.sh "$1"
 }
 
 build_os_image()
@@ -58,7 +59,7 @@ run_image()
   build_os_image
 
   echo "Starting qemu with os image"
-  bash ./qemu_image.sh $1
+  bash ./qemu_image.sh "$1"
 }
 
 if [ "$1" == "build" ]
@@ -84,5 +85,5 @@ fi
 
 if [ "$1" == "clean" ]
 then
-  clean $2
+  clean "$2"
 fi
