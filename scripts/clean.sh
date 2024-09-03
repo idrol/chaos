@@ -4,6 +4,7 @@ bash ./unmount_image.sh
 
 clean_all()
 {
+  echo "Removing build directory"
   if [ -d "./build" ]
   then
     rm -rf ./build
@@ -11,10 +12,12 @@ clean_all()
 }
 
 clean_image() {
+  echo "Cleaning built images"
   rm ./build/chaos.img
 }
 
 clean_code() {
+  echo "Cleaning cmake directory"
   rm -rf ./build/cmake-kernel-debug
 }
 

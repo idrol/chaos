@@ -1,0 +1,8 @@
+cmake
+ninja
+gdb
+gcc
+make
+mkfs.vfat
+grub-install
+losetup

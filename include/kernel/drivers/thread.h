@@ -5,21 +5,28 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <HashMap.h>
 
 #define MAX_PROCESSES 65536
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct thread_registers_struct
+{
+    uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip, eflags;
+};
+
+typedef struct thread_registers_struct thread_registers_t;
+
+struct thread_control_block_struct;
+typedef struct thread_control_block_struct thread_control_block_t;
 
 struct thread_control_block_struct {
     uint32_t stack_top;
     uint32_t page_directory_address;
-    thread_control_block_struct* next;
+    thread_registers_t registers;
+    thread_control_block_t* next;
 };
 
-typedef struct thread_control_block_struct thread_control_block_t;
+class Thread
+{
 
-#ifdef __cplusplus
-}
-#endif
+};

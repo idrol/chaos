@@ -65,15 +65,15 @@ void fat_init() {
                           &fat_tellDir,
                           &fat_read,
                           &fat_write);
-    buffer = kmalloc(512);
-    returnDir = kmalloc(sizeof(fat_dirent_t));
+    buffer = (uint8_t*)kmalloc(512);
+    returnDir = (fat_dirent_t*)kmalloc(sizeof(fat_dirent_t));
     printf("Initialized FAT fs driver\n");
 }
 
 
 void* fat_create_instance(block_logical_device_t* device) {
     block_logical_device_read(device, 0, 1, buffer);
-    fat_instance_t* instance = kmalloc(sizeof(fat_instance_t));
+    fat_instance_t* instance = (fat_instance_t*)kmalloc(sizeof(fat_instance_t));
     instance->bytesPerBlock = *((uint16_t*)&buffer[0x0B]);
     instance->numBlocksPerCluster = buffer[0x0D];
     instance->numReservedBlocks = *((uint16_t*)&buffer[0x0E]);
@@ -132,7 +132,7 @@ uint32_t fat_get_root_directory_block(fat_instance_t* fatInstance) {
 
 uint32_t fat_get_fat_table_value(fs_instance_t* instance, uint32_t currentCluster) {
     fat_instance_t* fatInstance = (fat_instance_t*) instance->implPtr;
-    unsigned char* FAT_table = kmalloc(fatInstance->bytesPerBlock);
+    unsigned char* FAT_table = (unsigned char*)kmalloc(fatInstance->bytesPerBlock);
     uint32_t retValue = 0xFFF8;
 
     if(fatInstance->fatType == FAT_TYPE_12 ||
@@ -237,7 +237,7 @@ fs_dir_entry_t* fat_get_next_directory_entry_from_stream(fs_instance_t* instance
     }
 
     fat_instance_t* fat_instance = (fat_instance_t*)instance->implPtr;
-    char* lfnBuffer = kmalloc(FS_NAME_MAX);
+    char* lfnBuffer = (char*)kmalloc(FS_NAME_MAX);
     uint16_t lfnLength = 0;
 
     bool foundDirectoryEntry = false;
@@ -347,11 +347,11 @@ fs_dir_entry_t* fat_find_directory_entry_from_stream(fs_instance_t* instance, fa
 fat_directory_stream_t* fat_find_directory_entry(fs_instance_t* instance, const char* directory) {
     fat_instance_t* fat_instance = (fat_instance_t*)instance->implPtr;
     fat_directory_stream_t* currentDirectory = NULL;
-    currentDirectory = kmalloc(sizeof(fat_directory_stream_t));
+    currentDirectory = (fat_directory_stream_t*)kmalloc(sizeof(fat_directory_stream_t));
     currentDirectory->firstDataClusterIsRootDirectory = true;
     currentDirectory->firstDataCluster = 0;
     currentDirectory->bufferHasData = false;
-    currentDirectory->blockBuffer = kmalloc(fat_instance->bytesPerBlock);
+    currentDirectory->blockBuffer = (unsigned char*)kmalloc(fat_instance->bytesPerBlock);
     currentDirectory->currentClusterIsRootDirectory = true;
     currentDirectory->currentCluster = currentDirectory->firstDataCluster;
     currentDirectory->currentBlockOffset = 0;
@@ -361,7 +361,7 @@ fat_directory_stream_t* fat_find_directory_entry(fs_instance_t* instance, const 
         return currentDirectory;
     }
 
-    char* tmpStr = kmalloc(strlen(directory)+1);
+    char* tmpStr = (char*)kmalloc(strlen(directory)+1);
     strcpy(tmpStr, directory);
     tmpStr = path_sanitize(tmpStr);
 

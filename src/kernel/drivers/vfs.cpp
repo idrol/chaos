@@ -23,10 +23,10 @@ vfs_process_file_descriptors_t* currentProcessFD = NULL;
 vfs_mount_point_t** mountPoints;
 
 void vfs_init() {
-    processFD = kmalloc(sizeof(vfs_process_file_descriptors_t*)*MAX_PROCESSES);
-    processFD[0] = kmalloc(sizeof(vfs_process_file_descriptors_t));
+    processFD = (vfs_process_file_descriptors_t**)kmalloc(sizeof(vfs_process_file_descriptors_t*)*MAX_PROCESSES);
+    processFD[0] = (vfs_process_file_descriptors_t*)kmalloc(sizeof(vfs_process_file_descriptors_t));
     currentProcessFD = processFD[0];
-    mountPoints = kmalloc(sizeof(vfs_mount_point_t*)*VFS_MAX_MOUNT_POINTS);
+    mountPoints = (vfs_mount_point_t**)kmalloc(sizeof(vfs_mount_point_t*)*VFS_MAX_MOUNT_POINTS);
     for(size_t i = 0; i < VFS_MAX_MOUNT_POINTS; i++) {
         mountPoints[i] = NULL;
     }
@@ -48,9 +48,9 @@ void vfs_mount(block_logical_device_t* logicalDevice, const char* path) {
     }
 
     size_t pathLength = strlen(path);
-    vfs_mount_point_t* mountPoint = kmalloc(sizeof(vfs_mount_point_t));
+    vfs_mount_point_t* mountPoint = (vfs_mount_point_t*)kmalloc(sizeof(vfs_mount_point_t));
     mountPoint->logicalDevice = logicalDevice;
-    mountPoint->path = kmalloc(pathLength+1);
+    mountPoint->path = (char*)kmalloc(pathLength+1);
     memcpy(mountPoint->path, path, pathLength);
     mountPoint->path[pathLength] = 0x0;
     mountPoint->pathLength = pathLength;
@@ -93,7 +93,7 @@ void vfs_unmount_device(block_logical_device_t* logicalDevice) {
     printf("Unmount error\n");
 }
 
-const vfs_mount_point_t** vfs_list_mount_points() {
+vfs_mount_point_t** vfs_list_mount_points() {
     return mountPoints;
 }
 
@@ -128,10 +128,6 @@ vfs_mount_point_t* vfs_find_mount_point(const char* path) {
     return NULL;
 }
 
-void vfs_switch_to_process() {
-
-}
-
 DIR* vfs_openDir(const char* path) {
     if(path == NULL) return NULL;
     vfs_mount_point_t* mountPoint = vfs_find_mount_point(path);
@@ -144,7 +140,7 @@ DIR* vfs_openDir(const char* path) {
 
     if(directoryStream == NULL) return NULL;
 
-    vfs_directory_stream_t* vfsDirectoryStream = kmalloc(sizeof(vfs_directory_stream_t));
+    vfs_directory_stream_t* vfsDirectoryStream = (vfs_directory_stream_t*)kmalloc(sizeof(vfs_directory_stream_t));
     vfsDirectoryStream->fs_directoryStream = directoryStream;
     vfsDirectoryStream->instance = mountPoint->fsInstance;
 
@@ -183,14 +179,16 @@ uint64_t vfs_tellDir(DIR* dirPtr) {
     return fs_tellDir(vfsDirectoryStream->instance, vfsDirectoryStream->fs_directoryStream);
 }
 
-void vfs_read(const char* path, size_t size, void* buffer) {
-    vfs_mount_point_t* mountPoint = vfs_find_mount_point(path);
+size_t vfs_read(int32_t fd, void* buffer, size_t count) {
+    /*vfs_mount_point_t* mountPoint = vfs_find_mount_point(path);
     if(mountPoint == NULL) return;
-    fs_read(mountPoint->fsInstance, (char*)((size_t)(path) + mountPoint->pathLength), size, buffer);
+    fs_read(mountPoint->fsInstance, (char*)((size_t)(path) + mountPoint->pathLength), size, buffer);*/
+    return 0;
 }
 
-void vfs_write(const char* path, size_t size, void* buffer) {
-    vfs_mount_point_t* mountPoint = vfs_find_mount_point(path);
+size_t vfs_write(int32_t fd, const void* buffer, size_t count) {
+    /*vfs_mount_point_t* mountPoint = vfs_find_mount_point(path);
     if(mountPoint == NULL) return;
-    fs_write(mountPoint->fsInstance, (char*)((size_t)(path) + mountPoint->pathLength), size, buffer);
+    fs_write(mountPoint->fsInstance, (char*)((size_t)(path) + mountPoint->pathLength), size, buffer);*/
+    return 0;
 }

@@ -28,7 +28,7 @@ block_device_t* block_device_create(size_t hwDevicePtr, uint32_t blockSize, bloc
     partition_info_t* partitionInfo = parition_get_next_partition(blockDevice);;
     while(partitionInfo != NULL) {
         if(partitionInfo->valid) {
-            block_logical_device_t* logicalDevice = kmalloc(sizeof(block_logical_device_t));
+            block_logical_device_t* logicalDevice = (block_logical_device_t*)kmalloc(sizeof(block_logical_device_t));
             logicalDevice->physicalDevice = blockDevice;
             logicalDevice->partitionNum = partitionInfo->partitionIndex;
             logicalDevice->blockOffset = partitionInfo->blockOffset;

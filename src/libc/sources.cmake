@@ -7,4 +7,7 @@ set(CHAOS_LIBC_SRCS
         "${CMAKE_CURRENT_SOURCE_DIR}/sprintf.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/stdio.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/string.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hash.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/HashMap.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cpp.cpp"
 )

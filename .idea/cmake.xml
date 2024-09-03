@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="CMakeSharedSettings">
-    <configurations>
-      <configuration PROFILE_NAME="Debug-WSL i686 cross compiler" ENABLED="true" CONFIG_NAME="Debug" TOOLCHAIN_NAME="WSL i686 cross compiler" GENERATION_OPTIONS="-G &quot;Unix Makefiles&quot; -DOS_ARCH=i686 -DOS_PLATFORM=pc" />
-    </configurations>
-  </component>
-</project>

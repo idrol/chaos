@@ -1,8 +1,23 @@
 #!/bin/bash
 
+source ~/i686_cross_compiler/i686.env
+if ! type "i686-elf-gcc" &> /dev/null;
+then
+  echo "Cannot find i686-elf-gcc compiler"
+  while true; do
+    read -p "Do you wish to automatically install i686-elf-gcc compiler to users home directory [Y/n] " yn
+    case $yn in
+      [Yy]* ) bash ./sync_dependencies.sh; break;;
+      [Nn]* ) exit;;
+      * ) echo "Please answer yes or no.";;
+    esac
+  done
+fi
+
 if [[ -z "$1" ]]
 then
 cat << EOF
+Chaos Build Scripts
 Usage $0 [arg]
   Arguments:
     build:                 Compile binaries
@@ -65,4 +80,9 @@ fi
 if [ "$1" == "debug-image" ]
 then
   run_image debug
+fi
+
+if [ "$1" == "clean" ]
+then
+  clean $2
 fi

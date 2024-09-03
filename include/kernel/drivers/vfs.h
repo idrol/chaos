@@ -1,9 +1,8 @@
 #pragma once
 
-#pragma once
-
 #include <drivers/blockio.h>
 #include <drivers/fs.h>
+#include <drivers/thread.h>
 #include <stdbool.h>
 
 #define VFS_MAX_MOUNT_POINTS 16
@@ -27,9 +26,7 @@ void vfs_mount(block_logical_device_t* logicalDevice, const char* path);
 void vfs_unmount(const char* path);
 void vfs_unmount_device(block_logical_device_t* logicalDevice);
 bool vfs_has_mount_point(const char* path);
-const vfs_mount_point_t** vfs_list_mount_points();
-
-void vfs_switch_to_process(uint32_t pid);
+vfs_mount_point_t** vfs_list_mount_points();
 
 DIR* vfs_openDir(const char* dirName);
 int vfs_closeDir(DIR* dirPtr);

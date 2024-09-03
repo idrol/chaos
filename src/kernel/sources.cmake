@@ -6,10 +6,10 @@ set(KERNEL_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/panic.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/partition.c
         ${CMAKE_CURRENT_SOURCE_DIR}/path.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/blockio.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/chario.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/device.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/fat.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/fs.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/vfs.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/blockio.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/chario.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/device.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/fat.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/fs.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/vfs.cpp
 )
