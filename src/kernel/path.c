@@ -47,26 +47,9 @@ char* path_sanitize(char* path) {
 }
 
 char* path_split(char* path) {
-    static bool lastReturnWasNull;
-    static size_t end;
-    static char* lastToken;
-    if(lastReturnWasNull) return NULL;
     if(path != NULL) {
         path = path_sanitize(path);
         if(path[0] == '/') path = &path[1];
-        lastReturnWasNull = false;
-        lastToken = NULL;
     }
-    char* token = strtok(path, "/");
-    if(token == NULL) {
-        lastReturnWasNull = true;
-        if(lastToken == NULL) {
-            // Only one directory level
-            return path;
-        }
-        size_t tokenLen = strlen(lastToken);
-        return &lastToken[tokenLen+1];
-    }
-    lastToken = token;
-    return token;
+    return strtok(path, "/");
 }

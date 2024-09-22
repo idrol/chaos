@@ -3,31 +3,64 @@
 //
 #include "i386_interrupts.h"
 #include "i386_hal.h"
+#include <stdio.h>
+#include <drivers/interrupts.h>
+
+#include "i386_pic.h"
 
 idt_entry_t  idt_entries[256];
 idt_ptr_t idt_ptr;
 
 extern "C" void setIDT(uint32_t);
 
-__cdecl __attribute__((interrupt)) void i386_default_handler(intframe_t *iframe) {
-    /*printf("Unregistered handler called!!! Dumping frame\n");
+extern "C" uint32_t default_handlers[256];
 
-    printf("Error code %#08X\n", iframe->error_code);
-    printf("EIP %#08X\n", iframe->eip);
-    printf("CS %#08X\n", iframe->cs);
-    printf("EFLAGS %#08X\n", iframe->eflags);*/
+__cdecl void i386_irq_handler_common(uint32_t irq, intframe_t* interrupt_frame)
+{
+    interrupt_call_handler(irq);
+    if(i386_pic_is_pic_irq(irq))
+    {
+        i386_pic_send_eoi(i386_pic_translate_irq(irq));
+    }
+}
+
+void i386_interrupt_activation_handler(bool enabled)
+{
+    if(enabled)
+    {
+        i386_hal_enable_interrupts();
+    } else
+    {
+        i386_hal_disable_interrupts();
+    }
+}
+
+void i386_set_irq_mask(uint32_t irq, bool enabled)
+{
+    if(i386_pic_is_active() && i386_pic_is_pic_irq(irq))
+    {
+        uint8_t picIrq = i386_pic_translate_irq(irq);
+        if(enabled)
+        {
+            i386_pic_enable_irq(picIrq);
+        } else
+        {
+            i386_pic_disable_irq(picIrq);
+        }
+    }
 }
 
 __cdecl void i386_interrupts_init() {
     idt_ptr.base = (uint32_t)&idt_entries;
     idt_ptr.limit = (uint16_t)(8 * 256) - 1;
 
-    uint32_t address = (uint32_t)&i386_default_handler;
     for(uint16_t i = 0; i < 256; i++) {
-        i386_interrupts_set_entry(i, address, 1, INTERRUPT_GATE);
+        i386_interrupts_set_entry(i, default_handlers[i], 1, INTERRUPT_GATE);
     }
 
     setIDT((uint32_t)&idt_ptr);
+
+    interrupt_init(&i386_interrupt_activation_handler, &i386_set_irq_mask);
 }
 
 __cdecl void i386_interrupts_set_entry(int32_t num, uint32_t offset, uint16_t gdt_entry, uint8_t type) {

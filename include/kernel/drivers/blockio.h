@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define DEVICE_TYPE_BLOCK 0x1
 
 #ifdef __cplusplus
 extern "C" {

@@ -6,9 +6,11 @@
 #include <string.h>
 #include <memory.h>
 #include <path.h>
+#include <sh.h>
+#include <drivers/ps2_kb.h>
 
 extern "C" void kernel_main() {
-    DIR* dirStream = vfs_openDir("/boot/grub/");
+    /*DIR* dirStream = vfs_openDir("/boot/grub/");
     if(dirStream != NULL) {
         fs_dir_entry_t* dirEntry = vfs_readDir(dirStream);
         printf("Listing entries in /boot/grub/\n");
@@ -24,5 +26,6 @@ extern "C" void kernel_main() {
         vfs_closeDir(dirStream);
     } else {
         printf("Failed to open directory stream for /boot/grub/\n");
-    }
+    }*/
+    kernel_sh();
 }

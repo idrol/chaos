@@ -39,7 +39,7 @@ __attribute__((interrupt)) void i386_device_not_available(intframe_t *interrupt_
     kernel_panic("Device not available called");
 }
 
-__attribute__((interrupt)) void i386_double_fault(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_double_fault(int_error_frame_t *interrupt_frame) {
     kernel_panic("Double fault!!!!!");
 }
 
@@ -48,23 +48,23 @@ __attribute__((interrupt)) void i386_coproccessor_seg_overrun(intframe_t *interr
     kernel_panic("Co-processor segment overrun");
 }
 
-__attribute__((interrupt)) void i386_invalid_tss(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_invalid_tss(int_error_frame_t *interrupt_frame) {
     kernel_panic("Invalid TSS");
 }
 
-__attribute__((interrupt)) void i386_segment_not_present(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_segment_not_present(int_error_frame_t *interrupt_frame) {
     kernel_panic("Segment not present");
 }
 
-__attribute__((interrupt)) void i386_stack_segment_fault(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_stack_segment_fault(int_error_frame_t *interrupt_frame) {
     kernel_panic("Stack segment fault");
 }
 
-__attribute__((interrupt)) void i386_gpf(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_gpf(int_error_frame_t *interrupt_frame) {
     kernel_panic("General protection fault");
 }
 
-__attribute__((interrupt)) void i386_page_fault(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_page_fault(int_error_frame_t *interrupt_frame) {
     //kernel_panic("Page fault");
     uint32_t virtualAddress;
     asm volatile(
@@ -74,11 +74,11 @@ __attribute__((interrupt)) void i386_page_fault(intframe_t *interrupt_frame, uin
             : /* No input */
             : "%eax"
             );
-    kernel_panic("Page fault 0x%xl", virtualAddress);
+    kernel_panic("Page fault 0x%X Stack 0x%X", virtualAddress, interrupt_frame->eip);
     //printf("Page fault %#08x\n", virtualAddress);
     // The address that caused this exception is stored in CR2 but we can only access it from assembly
-    bool present = error_code & 0x1; // If set the fault occured due to page protection. If not set the fault was cause by non present page
-    bool isWriteError = error_code & 0x1 << 1; // Indicates whethe this fault was caused by a write or read operation
+    bool present = interrupt_frame->error_code & 0x1; // If set the fault occured due to page protection. If not set the fault was cause by non present page
+    bool isWriteError = interrupt_frame->error_code & 0x1 << 1; // Indicates whethe this fault was caused by a write or read operation
     // If i understood the documentation the flags bellow should only be accessed if you are sure about certain states in the cpu and present = true
     //bool isUser = error_code & 0x1 << 2; // The access level the code that caused this error had. This doesn't mean that it is a privilige error if this is true.
     //bool reserved_write = error_code & 0x1 << 3;
@@ -114,7 +114,7 @@ __attribute__((interrupt)) void i386_floating_point_exception(intframe_t *interr
     kernel_panic("x87 floating point exception");
 }
 
-__attribute__((interrupt)) void i386_alignment_check(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_alignment_check(int_error_frame_t *interrupt_frame) {
     kernel_panic("Alignment check exception");
 }
 
@@ -130,7 +130,7 @@ __attribute__((interrupt)) void i386_virt_exception(intframe_t *interrupt_frame)
     kernel_panic("Virtualization exception");
 }
 
-__attribute__((interrupt)) void i386_security_exception(intframe_t *interrupt_frame, uint32_t error_code) {
+__attribute__((interrupt)) void i386_security_exception(int_error_frame_t *interrupt_frame) {
     kernel_panic("Security exception");
 }
 

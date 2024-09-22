@@ -55,6 +55,35 @@ flushTSS:
     ltr %ax
     ret
 
+.macro irq_stub number
+    irq\number:
+        push $\number
+        call i386_irq_handler_common
+        add $4, %esp
+        iret
+.endm
+
+.altmacro
+
+.macro irq_insert number
+    .section .text
+    irq_stub \number
+
+    .section .data
+    .long irq\number
+.endm
+
+.section .data
+.global default_handlers
+default_handlers:
+    .set i,0
+    .rept 256
+        irq_insert %i
+        .set i, i+1
+    .endr
+
+.section .text
+
 /*.global jumpUserMode
 jumpUsermode:
     mov ax, (4 * 8) | 3;

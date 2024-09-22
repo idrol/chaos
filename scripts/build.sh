@@ -22,5 +22,5 @@ fi
 
 cp ../grub.cfg ./build/drive/boot/grub
 
-bash ./build_kernel.sh
+bash ./build_kernel.sh || exit $?
 

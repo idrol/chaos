@@ -74,6 +74,12 @@ __cdecl char* strtok(char* str1, const char* delim) {
         }
         offset++;
     }
+    if(start[0] != 0x0)
+    {
+        auto len = strlen(start);
+        searchStr = &searchStr[len];
+        return start;
+    }
     return NULL;
 }
 

@@ -33,7 +33,7 @@ __cdecl void i386_vga_init() {
 __cdecl void i386_vga_init_memory() {
     text_buffer = (uint8_t*)kmalloc(BUFFER_SIZE);
     memset(text_buffer, 0x0, BUFFER_SIZE);
-    i386_vga_clear();
+    //i386_vga_clear();
 }
 
 __cdecl void i386_vga_clear() {
@@ -83,8 +83,6 @@ __cdecl void i386_vga_set_cursor_pos(uint8_t x, uint8_t y) {
         i386_hal_io_outb(0x3D4, 0x0E);
         i386_hal_io_outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
     }
-    vga_column = x;
-    vga_row = y;
 }
 
 __cdecl void i386_vga_put_entry_at(char c, uint8_t color, uint8_t x, uint8_t y) {
@@ -144,23 +142,55 @@ __cdecl void i386_vga_rerender_text_buffer() {
             y++;
         }
     }
-    if(cursor_enabled) {
+    vga_column = x;
+    vga_row = y;
+    i386_vga_set_cursor_pos(x, y);
+    /*if(cursor_enabled) {
         i386_vga_put_entry_at('>', VGA_COLOR_LIGHT_GREY, 0, VGA_HEIGHT-1);
         i386_vga_put_entry_at(' ', VGA_COLOR_LIGHT_GREY, 1, VGA_HEIGHT-1);
         i386_vga_set_cursor_pos(2, VGA_HEIGHT-1);
-    }
+    }*/
 }
 
 __cdecl void i386_vga_put_char(char c) {
     if(text_buffer != NULL) {
-        text_buffer[bufferNextPos] = (uint8_t)c;
-        bufferNextPos++;
-        bufferNextPos = bufferNextPos % BUFFER_SIZE;
-        if(c == '\n' || charactersSinceRerender >= 10) {
-            i386_vga_rerender_text_buffer();
+        if(c == '\b')
+        {
+            if(bufferNextPos == 0)
+            {
+                bufferNextPos = BUFFER_SIZE-1;
+            } else
+            {
+                bufferNextPos--;
+            }
+            text_buffer[bufferNextPos] = 0x0;
+            i386_vga_put_entry_at(' ', VGA_COLOR_LIGHT_GREY, vga_column, vga_row);
+            if(--vga_column == 0)
+            {
+                vga_column = VGA_WIDTH-1;
+                if(--vga_row == 0)
+                {
+                    vga_row = 0;
+                }
+            }
         } else {
-            charactersSinceRerender++;
+            text_buffer[bufferNextPos] = (uint8_t)c;
+            bufferNextPos++;
+            bufferNextPos = bufferNextPos % BUFFER_SIZE;
+            if(c == '\n') {
+                i386_vga_rerender_text_buffer();
+                return;
+            }
+            i386_vga_put_entry_at(c, VGA_COLOR_LIGHT_GREY, vga_column, vga_row);
+            if(++vga_column == VGA_WIDTH) {
+                vga_column = 0;
+                if(++vga_row == VGA_HEIGHT) {
+                    vga_row = 0;
+                    //i386_vga_clear();
+                }
+            }
         }
+        i386_vga_set_cursor_pos(vga_column, vga_row);
         return;
     }
     if(c == '\n')  {
@@ -179,7 +209,7 @@ __cdecl void i386_vga_put_char(char c) {
             }
         }
     }
-    if(cursor_enabled) i386_vga_set_cursor_pos(vga_column, vga_row+1);
+    i386_vga_set_cursor_pos(vga_column, vga_row);
 }
 
 __cdecl void i386_vga_write(const char* data, uint32_t size) {

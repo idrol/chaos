@@ -24,7 +24,7 @@ block_device_t* block_device_create(size_t hwDevicePtr, uint32_t blockSize, bloc
     } else {
         printf("New physical block device with Unknown partition discovered\n");
     }
-    asm volatile("hlt");
+    //asm volatile("hlt");
     partition_info_t* partitionInfo = parition_get_next_partition(blockDevice);;
     while(partitionInfo != NULL) {
         if(partitionInfo->valid) {
@@ -64,13 +64,17 @@ void block_logical_device_read(block_logical_device_t* device, uint32_t blockOff
     uint32_t partitionEnd = partitionStart+device->blockCount;
 
     uint32_t start = partitionStart+blockOffset;
-    uint32_t end = partitionStart+blockCount;
-    if(end > partitionEnd) {
-        size_t skipped = end - partitionEnd;
-        printf("Error: Attempted to read outside of logicalDevice skipped %i blocks\n", skipped);
-        end = partitionEnd;
+    uint32_t end = start+blockCount;
+    if(start > partitionEnd || start < partitionStart)
+    {
+        printf("Error: Attempted to read outside of logicalDevice 0x%X->0x%X Start: 0x%X\n", partitionStart, partitionEnd, start);
+        return;
     }
-    device->physicalDevice->readBlockImpl(device->physicalDevice, start, end, buffer);
+    if(end > partitionEnd || end < partitionStart) {
+        printf("Error: Attempted to read outside of logicalDevice 0x%X->0x%X End: 0x%X\n", partitionStart, partitionEnd, end);
+        return;
+    }
+    device->physicalDevice->readBlockImpl(device->physicalDevice, start, blockCount, buffer);
 }
 
 void block_logical_device_write(block_logical_device_t* device, uint32_t blockOffset, uint32_t blockCount, void* buffer) {

@@ -6,19 +6,19 @@
 #include <stdbool.h>
 
 #define VFS_MAX_MOUNT_POINTS 16
+#define VFS_MAX_FILE_DESCRIPTORS_PER_PROCESS 1024
+#define VFS_STD_STREAM_BUFFER_SIZE 65536
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct vfs_mount_point_struct {
+struct vfs_mount_point_t {
     block_logical_device_t* logicalDevice;
     char* path;
     size_t pathLength;
     fs_instance_t* fsInstance;
 };
-
-typedef struct vfs_mount_point_struct vfs_mount_point_t;
 
 void vfs_init();
 
@@ -27,6 +27,9 @@ void vfs_unmount(const char* path);
 void vfs_unmount_device(block_logical_device_t* logicalDevice);
 bool vfs_has_mount_point(const char* path);
 vfs_mount_point_t** vfs_list_mount_points();
+
+bool vfs_new_process_descriptors(uint16_t pid);
+bool vfs_delete_process_descriptors(uint16_t pid);
 
 DIR* vfs_openDir(const char* dirName);
 int vfs_closeDir(DIR* dirPtr);

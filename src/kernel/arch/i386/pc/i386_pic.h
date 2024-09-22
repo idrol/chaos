@@ -43,7 +43,10 @@ uint16_t i386_pic_get_irq_register(int32_t ocw3);
 __attribute__((no_caller_saved_registers)) uint16_t i386_pic_get_irr();
 __attribute__((no_caller_saved_registers)) uint16_t i386_pic_get_isr();
 
-void     i386_pic_init(uint16_t masterOffset, uint16_t slaveOffset);
+void i386_pic_init(uint16_t offset);
+bool i386_pic_is_active();
+bool i386_pic_is_pic_irq(uint32_t irq);
+uint8_t i386_pic_translate_irq(uint32_t irq);
 
 
 #ifdef __cplusplus

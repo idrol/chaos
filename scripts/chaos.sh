@@ -28,8 +28,8 @@ Usage $0 [arg]
                            image only removes built image
                            code removes built binaries
 
-    run-image (default):   Run os with qemu image
-    debug-image:           Debug os with qemu image (runs cmake build in background to update binaries)
+    qemu:                  Run os with qemu image
+    qemu-debug:            Debug os with qemu image (runs cmake build in background to update binaries)
 EOF
 fi
 
@@ -40,18 +40,18 @@ clean() {
 build_os_image()
 {
   echo "Building os image"
-  bash ./build.sh
+  bash ./build.sh || exit $?
   
   if [ -f "./build/chaos.img" ]
   then
-    bash ./mount_image.sh
+    bash ./mount_image.sh || exit $?
   else
-    bash ./create_image.sh
+    bash ./create_image.sh || exit $?
   fi
   
-  bash ./sync_image.sh
+  bash ./sync_image.sh || exit $?
   
-  bash ./unmount_image.sh
+  bash ./unmount_image.sh || exit $?
 }
 
 run_image()
@@ -73,12 +73,12 @@ then
   build_os_image
 fi
 
-if [ "$1" == "run-image" ]
+if [ "$1" == "qemu" ]
 then
   run_image
 fi
 
-if [ "$1" == "debug-image" ]
+if [ "$1" == "qemu-debug" ]
 then
   run_image debug
 fi

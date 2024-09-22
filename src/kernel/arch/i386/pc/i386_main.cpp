@@ -17,8 +17,11 @@
 #include <drivers/device.h>
 #include <drivers/fat.h>
 #include <drivers/fs.h>
+#include <drivers/interrupts.h>
 #include <drivers/vfs.h>
-#include "ata.h"
+#include <drivers/io.h>
+#include <drivers/ata.h>
+#include <drivers/ps2_kb.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -39,13 +42,23 @@ extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t
 {
     i386_vga_init();
 
-    printf("Kernel start 0x%lX kernel end 0x%lX\n", (uint32_t)&kernel_start, (uint32_t)&kernel_end);
+    printf("Kernel start 0x%lX\nKernel end 0x%lX\n", (uint32_t)&kernel_start, (uint32_t)&kernel_end);
+
+    io_init(
+        &i386_hal_io_halt,
+        &i386_hal_io_wait,
+        &i386_hal_io_outb,
+        &i386_hal_io_inb,
+        &i386_hal_io_outw,
+        &i386_hal_io_inw,
+        &i386_hal_io_outl,
+        &i386_hal_io_inl);
 
     i386_hal_disable_interrupts();
 
     i386_gdt_init();
     i386_interrupts_init();
-    i386_pic_init(32, 40);
+    i386_pic_init(32);
     i386_exception_init();
 
     i386_hal_enable_interrupts();
@@ -55,14 +68,19 @@ extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t
 
     i386_vga_init_memory();
 
+    thread_init();
     block_init();
     device_init();
     fs_init();
     fat_init();
     vfs_init();
+    interrupt_enable_line(46);
+    interrupt_enable_line(47);
     ata_init_devices();
 
-    //i386_vga_clear();
+    ps2_kb_init();
 
+    printf("Kernel init done\n");
     kernel_main();
+    printf("Kernel end\n");
 }

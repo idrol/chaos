@@ -1,22 +1,72 @@
 #include <drivers/vfs.h>
 #include <drivers/thread.h>
 #include <memory.h>
+#include <panic.h>
 #include <stdio.h>
 #include <string.h>
 
-struct vfs_process_file_descriptors_struct {
-    
+struct vfs_std_stream_descriptor_t
+{
+    vfs_std_stream_descriptor_t(bool writeMode)
+    {
+        this->writeMode = writeMode;
+        buffer = kmalloc(bufferSize);
+    }
+
+    ~vfs_std_stream_descriptor_t()
+    {
+        kfree(buffer);
+    }
+
+    bool writeMode = false;
+    size_t bufferSize = VFS_STD_STREAM_BUFFER_SIZE;
+    void* buffer;
+};
+
+struct vfs_file_descriptor_t
+{
+    fs_instance_t* instance = nullptr;
+    size_t fileSize = 0;
+    size_t fileCursor = 0;
+    bool bufferedMode = false; // TODO implement buffered write mode (data is first written to memory buffer before being writen to disk or newline is enountered or call to sync is made)
+    void* implPtr = nullptr;
+};
+
+struct vfs_process_file_descriptors_t {
+    vfs_process_file_descriptors_t()
+    {
+        fileDescriptors = (vfs_file_descriptor_t**)kmalloc(sizeof(vfs_file_descriptor_t*)*VFS_MAX_FILE_DESCRIPTORS_PER_PROCESS);
+        // STDIN
+        fileDescriptors[0] = new vfs_file_descriptor_t();
+        fileDescriptors[0]->implPtr = new vfs_std_stream_descriptor_t(false);
+        // STDOUT
+        fileDescriptors[1] = new vfs_file_descriptor_t();
+        fileDescriptors[1]->implPtr = new vfs_std_stream_descriptor_t(true);
+        // STDERR
+        fileDescriptors[2] = new vfs_file_descriptor_t();
+        fileDescriptors[2]->implPtr = new vfs_std_stream_descriptor_t(true);
+    }
+
+    ~vfs_process_file_descriptors_t()
+    {
+        delete (vfs_std_stream_descriptor_t*)fileDescriptors[0]->implPtr;
+        delete (vfs_std_stream_descriptor_t*)fileDescriptors[1]->implPtr;
+        delete (vfs_std_stream_descriptor_t*)fileDescriptors[2]->implPtr;
+        delete fileDescriptors[0];
+        delete fileDescriptors[1];
+        delete fileDescriptors[2];
+        kfree(fileDescriptors);
+    }
+
+    vfs_file_descriptor_t** fileDescriptors = NULL;
 };
 
 
 
-struct vfs_directory_stream_struct {
+struct vfs_directory_stream_t {
     DIR* fs_directoryStream;
     fs_instance_t* instance;
 };
-
-typedef struct vfs_directory_stream_struct vfs_directory_stream_t;
-typedef struct vfs_process_file_descriptors_struct vfs_process_file_descriptors_t;
 
 vfs_process_file_descriptors_t** processFD = NULL;
 vfs_process_file_descriptors_t* currentProcessFD = NULL;
@@ -24,13 +74,25 @@ vfs_mount_point_t** mountPoints;
 
 void vfs_init() {
     processFD = (vfs_process_file_descriptors_t**)kmalloc(sizeof(vfs_process_file_descriptors_t*)*MAX_PROCESSES);
-    processFD[0] = (vfs_process_file_descriptors_t*)kmalloc(sizeof(vfs_process_file_descriptors_t));
+    vfs_new_process_descriptors(0);
     currentProcessFD = processFD[0];
     mountPoints = (vfs_mount_point_t**)kmalloc(sizeof(vfs_mount_point_t*)*VFS_MAX_MOUNT_POINTS);
     for(size_t i = 0; i < VFS_MAX_MOUNT_POINTS; i++) {
         mountPoints[i] = NULL;
     }
     printf("Initialized vfs driver\n");
+}
+
+bool vfs_new_process_descriptors(uint16_t pid)
+{
+    if(processFD == nullptr) kernel_panic("Failed to init process file descriptors");
+    processFD[pid] = new vfs_process_file_descriptors_t();
+
+}
+
+bool vfs_delete_process_descriptors(uint16_t pid)
+{
+
 }
 
 void vfs_sort_mount_points() {
@@ -48,7 +110,7 @@ void vfs_mount(block_logical_device_t* logicalDevice, const char* path) {
     }
 
     size_t pathLength = strlen(path);
-    vfs_mount_point_t* mountPoint = (vfs_mount_point_t*)kmalloc(sizeof(vfs_mount_point_t));
+    auto mountPoint = (vfs_mount_point_t*)kmalloc(sizeof(vfs_mount_point_t));
     mountPoint->logicalDevice = logicalDevice;
     mountPoint->path = (char*)kmalloc(pathLength+1);
     memcpy(mountPoint->path, path, pathLength);

@@ -99,6 +99,18 @@ void MemoryManager::free(void* ptr) {
         }
 
         allocated -= sizeof(MemoryBlock); // Because we merged 2 memory blocks we removed 1 block header so that memory became unallocated
+    } else if(block->prev != nullptr && !block->prev->allocated)
+    {
+        MemoryBlock* leftBlock = block->prev;
+
+        leftBlock->size = leftBlock->size + sizeof(MemoryBlock) + block->size;
+        leftBlock->next = block->next;
+        if(block->next != nullptr)
+        {
+            block->next->prev = leftBlock;
+        }
+
+        allocated -= sizeof(MemoryBlock);
     }
     activeAllocations--;
 }

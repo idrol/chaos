@@ -26,7 +26,17 @@ struct idt_entry {
 
 } __attribute__((packed));
 
-__cdecl struct interrupt_frame {
+__cdecl struct intframe_t {
+    uint32_t eip;
+    uint16_t cs;
+    uint32_t eflags;
+    // Set if privilege change
+    uint32_t esp;
+    uint16_t ss;
+} __attribute__((packed));
+
+__cdecl struct int_error_frame_t
+{
     uint32_t error_code;
     uint32_t eip;
     uint16_t cs;
@@ -35,7 +45,6 @@ __cdecl struct interrupt_frame {
     uint32_t esp;
     uint16_t ss;
 } __attribute__((packed));
-__cdecl typedef struct interrupt_frame intframe_t;
 
 typedef struct idt_entry idt_entry_t;
 

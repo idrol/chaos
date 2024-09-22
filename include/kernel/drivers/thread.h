@@ -9,24 +9,21 @@
 
 #define MAX_PROCESSES 65536
 
-struct thread_registers_struct
+struct Thread
 {
-    uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip, eflags;
-};
-
-typedef struct thread_registers_struct thread_registers_t;
-
-struct thread_control_block_struct;
-typedef struct thread_control_block_struct thread_control_block_t;
-
-struct thread_control_block_struct {
     uint32_t stack_top;
     uint32_t page_directory_address;
-    thread_registers_t registers;
-    thread_control_block_t* next;
+
+    uint32_t eax, ebx, ecx, edx, esi, edi, esp, ebp, eip, eflags;
+
+    uint32_t envSize = 0;
+    char** env = nullptr;
+
+    Thread* nextThread = nullptr;
 };
 
-class Thread
-{
-
-};
+void thread_init();
+Thread *thread_get_active_thread();
+const char* getenv(const char* variable);
+void setenv(const char* variable, const char* value);
+void unsetenv(const char* variable);

@@ -4,6 +4,8 @@
 
 #define DEVICE_MAX_DEVICES 32
 #define DEVICE_TYPE_UNKOWN 0x0
+#define DEVICE_TYPE_BLOCK 0x1
+#define DEVICE_TYPE_CHAR 0x2
 
 #ifdef __cplusplus
 extern "C" {
