@@ -3,6 +3,7 @@
 //
 #include "i386_vga.h"
 #include "i386_hal.h"
+#include "i386_serial.h"
 #include <string.h>
 #include <tty.h>
 #include <memory.h>
@@ -233,4 +234,5 @@ __cdecl void i386_vga_write_line(const char* data) {
 
 __cdecl void tty_put_char(const int character) {
     i386_vga_put_char((const char)character);
+    i386_write_serial((char)character);
 }

@@ -16,5 +16,6 @@ set(KERNEL_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/io.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ps2_kb.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ata.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/serial.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/sh.cpp
 )

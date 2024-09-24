@@ -10,6 +10,7 @@
 #include "i386_vga.h"
 #include "i386_memory.h"
 #include "i386_tasking.h"
+#include "i386_serial.h"
 #include <memory.h>
 #include <stdio.h>
 #include <panic.h>
@@ -22,6 +23,7 @@
 #include <drivers/io.h>
 #include <drivers/ata.h>
 #include <drivers/ps2_kb.h>
+#include <drivers/serial.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -53,6 +55,9 @@ extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t
         &i386_hal_io_inw,
         &i386_hal_io_outl,
         &i386_hal_io_inl);
+
+    i386_init_serial();
+    serial_init(&i386_write_serial);
 
     i386_hal_disable_interrupts();
 

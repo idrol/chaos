@@ -1,1 +1,1 @@
-qemu-system-i386 -d guest_errors -no-shutdown -no-reboot -monitor stdio -m 4G -drive format=raw,media=disk,file=./build/chaos.img
+qemu-system-i386 -d guest_errors -no-shutdown -no-reboot -serial file:./kernel.serial -m 4G -drive format=raw,media=disk,file=./build/chaos.img

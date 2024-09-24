@@ -7,11 +7,11 @@
 #include <memory.h>
 
 MemoryBlock* MemoryManager::RegisterFreeBlock(size_t startAddr, size_t size) {
-    //printf("Memory manager registering new block 0x%lX size 0x%lX\n", startAddr, size);
+    printf("Memory manager registering new block 0x%lX size 0x%lX\n", startAddr, size);
     auto block = (MemoryBlock*)(startAddr);
     block->allocated = false;
     block->size = size - sizeof(MemoryBlock);
-    allocated += sizeof(MemoryBlock);
+    //allocated += sizeof(MemoryBlock);
     available += size;
 
     if(firstBlock == nullptr) {
@@ -55,24 +55,29 @@ void* MemoryManager::alloc(size_t size) {
 
     if(allocatedBlock->size == size) {
         // If we were to split the block into the allocated part and and unallocated block the unallocated block could not fit the block header and a single byte of memory and because of that we just mark the entire block as allocated
-        allocated += allocatedBlock->size;
+        allocated += allocatedBlock->size + sizeof(MemoryBlock);
     } else {
         // We can split the unallocated memory into it's own block to allow something else to allocate it
         /*size_t allocatedBlockAddress = (size_t)allocatedBlock;
         size_t memBlockSize = sizeof(MemoryBlock);
         size_t unallocatedBlockAddress = allocatedBlockAddress + memBlockSize + size;
         MemoryBlock* unallocatedBlock = (MemoryBlock*)unallocatedBlockAddress;*/
-        MemoryBlock* unallocatedBlock = (MemoryBlock*)((size_t)allocatedBlock + sizeof(MemoryBlock) + size);
-        unallocatedBlock->allocated = false;
-        unallocatedBlock->prev = allocatedBlock;
-        unallocatedBlock->next = allocatedBlock->next;
-        if(unallocatedBlock->next != nullptr) {
-            unallocatedBlock->next->prev = unallocatedBlock;
-        }
-        unallocatedBlock->size = allocatedBlock->size - size - sizeof(MemoryBlock);
+        auto nonAllocatedSize = allocatedBlock->size - size;
+        if(nonAllocatedSize >= sizeof(MemoryBlock) + 0x20) {
+            MemoryBlock* unallocatedBlock = (MemoryBlock*)((size_t)allocatedBlock + sizeof(MemoryBlock) + size);
+            unallocatedBlock->allocated = false;
+            unallocatedBlock->prev = allocatedBlock;
+            unallocatedBlock->next = allocatedBlock->next;
+            if(unallocatedBlock->next != nullptr) {
+                unallocatedBlock->next->prev = unallocatedBlock;
+            }
+            // We also remove sizeof MemoryBlock here because the new block size should not account
+            // for the new blocks memory block header
+            unallocatedBlock->size = allocatedBlock->size - size - sizeof(MemoryBlock);
 
-        allocatedBlock->next = unallocatedBlock;
-        allocatedBlock->size = size;
+            allocatedBlock->next = unallocatedBlock;
+            allocatedBlock->size = size;
+        }
 
         allocated += allocatedBlock->size + sizeof(MemoryBlock);
     }

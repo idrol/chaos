@@ -9,12 +9,13 @@
 MemoryManager kernelMemoryManager = MemoryManager();
 
 __cdecl void* kmalloc(size_t size) {
-    //printf("Kmalloc 0x%lX\n", size);
-    return kernelMemoryManager.alloc(size);
+    auto address = kernelMemoryManager.alloc(size);
+    printf("Kmalloc 0x%lX 0x%lX\n", size, (size_t)address);
+    return address;
 }
 
 __cdecl void kfree(void* address) {
-    //printf("Kfree 0x%lX\n", (uint32_t)address);
+    printf("Kfree 0x%lX\n", (uint32_t)address);
     if(address == nullptr) return;
     kernelMemoryManager.free(address);
 }
