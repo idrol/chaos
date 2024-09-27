@@ -2,7 +2,7 @@
 #include <drivers/io.h>
 
 #include <stdio.h>
-#include <memory.h>
+#include <drivers/memory.h>
 #include <stdbool.h>
 
 #define ATA_PRIMARY_BUS_IO 0x1F0

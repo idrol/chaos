@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <drivers/vfs.h>
 #include <string.h>
-#include <memory.h>
+#include <drivers/memory.h>
 #include <path.h>
 #include <sh.h>
 #include <drivers/ps2_kb.h>

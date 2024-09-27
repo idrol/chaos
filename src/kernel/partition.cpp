@@ -1,5 +1,5 @@
 #include "partition.h"
-#include <memory.h>
+#include <drivers/memory.h>
 #include <string.h>
 
 struct mbr_partition_struct {
@@ -17,8 +17,8 @@ uint8_t* blockBuffer;
 partition_info_t* partitionInfo;
 
 void partition_init() {
-    blockBuffer = kmalloc(512);
-    partitionInfo = kmalloc(sizeof(partition_info_t));
+    blockBuffer = (uint8_t*)kmalloc(512);
+    partitionInfo = (partition_info_t*)kmalloc(sizeof(partition_info_t));
 }
 
 bool partition_is_gpt(block_device_t* device) {

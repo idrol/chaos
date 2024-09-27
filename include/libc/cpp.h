@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include <memory.h>
+#include <drivers/memory.h>
 
 #ifdef __cplusplus
 void *operator new(size_t size);

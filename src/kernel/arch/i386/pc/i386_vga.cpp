@@ -6,7 +6,7 @@
 #include "i386_serial.h"
 #include <string.h>
 #include <tty.h>
-#include <memory.h>
+#include <drivers/memory.h>
 
 uint32_t vga_row;
 uint32_t  vga_column;

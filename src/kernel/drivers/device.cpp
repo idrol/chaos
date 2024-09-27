@@ -1,5 +1,5 @@
 #include <drivers/device.h>
-#include <memory.h>
+#include <drivers/memory.h>
 #include <stdio.h>
 
 device_entry_t* devices;

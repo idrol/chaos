@@ -11,7 +11,7 @@
 #include "i386_memory.h"
 #include "i386_tasking.h"
 #include "i386_serial.h"
-#include <memory.h>
+#include <drivers/memory.h>
 #include <stdio.h>
 #include <panic.h>
 #include <drivers/blockio.h>
@@ -24,6 +24,7 @@
 #include <drivers/ata.h>
 #include <drivers/ps2_kb.h>
 #include <drivers/serial.h>
+#include <drivers/paging.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -40,9 +41,30 @@ extern "C" uint32_t kernel_end;
 
 extern "C" void kernel_main();
 
+void* framebuffer_addr = nullptr;
+
+void framebuffer_draw()
+{
+
+}
+
 extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t* boot_page_directory, uint32_t stack_top, uint32_t stack_bottom)
 {
-    i386_vga_init();
+    if(mbd->flags & 0x1<<12)
+    {
+        if(mbd->framebuffer_type == 2)
+        {
+            i386_vga_init();
+        } else
+        {
+
+        }
+        //framebuffer_addr = mbd->framebuffer_addr;
+    } else
+    {
+        i386_vga_init();
+    }
+
 
     printf("Kernel start 0x%lX\nKernel end 0x%lX\n", (uint32_t)&kernel_start, (uint32_t)&kernel_end);
 

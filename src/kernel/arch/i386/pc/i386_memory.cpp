@@ -8,11 +8,7 @@
 #include <align.h>
 #include <buddy_allocator.h>
 #include "i386_paging.h"
-#include <memory.h>
-
-buddy_allocator_t* physicalMemoryAllocator = nullptr;
-buddy_allocator_t* kernelVirtualMemoryAllocator = nullptr;
-buddy_allocator_t* activeVirtualMemoryAllocator = nullptr;
+#include <drivers/memory.h>
 
 const char* memory_type(multiboot_uint32_t type) {
     if(type == MULTIBOOT_MEMORY_AVAILABLE) {
@@ -140,12 +136,7 @@ __cdecl void i386_memory_init(multiboot_info_t* mbd, uint32_t kernel_start, uint
         kernel_panic("Bootloader has not provided memory map");
     }
 
-    paging_kernel_page_directory = (PageDirectory*)boot_page_directory;
-    paging_active_page_directory = (PageDirectory*)boot_page_directory;
-
-    printf("Page 768 %d 0x%lX\n", paging_kernel_page_directory[768].IsPresent(), paging_kernel_page_directory[768].GetAddress());
-    printf("Page 769 %d 0x%lX\n", paging_kernel_page_directory[769].IsPresent(), paging_kernel_page_directory[769].GetAddress());
-    printf("Page 770 %d 0x%lX\n", paging_kernel_page_directory[770].IsPresent(), paging_kernel_page_directory[770].GetAddress());
+    i386_paging_setup_boot_directory((PageDirectory*)boot_page_directory);
 
     auto totalMemory = i386_memory_find_total_memory_size(mbd);
     printf("Total memory size is 0x%lX\n", totalMemory);
@@ -159,120 +150,23 @@ __cdecl void i386_memory_init(multiboot_info_t* mbd, uint32_t kernel_start, uint
     if((neededMemory*2)%ALIGN_4MIB>0) numPages++;
 
     for(uint32_t i = 0; i < numPages; i++) {
-        auto pd = &paging_get_active_page_directory()[769+i];
+        auto pd = &i386_paging_get_active_page_directory()[769+i];
         pd->SetPresent(true);
         pd->SetPhysical(true);
         pd->SetWriteEnabled(true);
         pd->SetAddress(freeMemoryStart+(ALIGN_4MIB*i));
     }
 
-    physicalMemoryAllocator = buddy_allocator_new_allocator_from_memory(_logical_address(freeMemoryStart), neededMemory, totalMemory);
+    auto physicalMemoryAllocator = buddy_allocator_new_allocator_from_memory(_logical_address(freeMemoryStart), neededMemory, totalMemory);
 
     i386_memory_mark_allocated_pages(mbd, kernel_start, kernel_end, physicalMemoryAllocator, freeMemoryStart, neededMemory*2);
 
-    kernelVirtualMemoryAllocator = buddy_allocator_new_allocator_from_memory(_logical_address(freeMemoryStart+neededMemory), neededMemory, totalMemory);
-    activeVirtualMemoryAllocator = kernelVirtualMemoryAllocator;
+    auto kernelVirtualMemoryAllocator = buddy_allocator_new_allocator_from_memory(_logical_address(freeMemoryStart+neededMemory), neededMemory, totalMemory);
 
-    buddy_allocator_set_allocated(activeVirtualMemoryAllocator, _logical_address(0x0), ALIGN_4MIB*(1+numPages));
-    buddy_allocator_set_allocated(activeVirtualMemoryAllocator, 0x0, _logical_address(0x0)); // Mark first 3.5Gib unusable
-}
+    buddy_allocator_set_allocated(kernelVirtualMemoryAllocator, _logical_address(0x0), ALIGN_4MIB*(1+numPages));
+    buddy_allocator_set_allocated(kernelVirtualMemoryAllocator, 0x0, _logical_address(0x0)); // Mark first 3.5Gib unusable
 
-__cdecl void* mmap(void* addressHint, size_t size, int prot, int flags) {
-    return i386_memory_mmap(addressHint, size, prot, flags);
-}
-
-__cdecl void* i386_memory_mmap(void* addressHint, size_t size, int prot, int flags) {
-    size_t alignment = ALIGN_4KIB;
-
-    if(flags & MAP_HUGETLB) {
-        alignment = ALIGN_4MIB;
-    } else {
-        printf("mmap does not support omitting MAP_HUGETLB");
-        return nullptr;
-    }
-
-    size_t alignedSize = size - (size % alignment);
-    if(alignedSize != size) alignedSize += alignment;
-    if(addressHint != NULL) {
-        printf("Address hint for mmap not supported");
-        return nullptr;
-    }
-    // Allocate continous virtual pages
-    auto virtualBlock = buddy_allocator_alloc_block(activeVirtualMemoryAllocator, alignedSize, alignment);
-    auto startVirtualAddress = virtualBlock.startAddress;
-
-    auto physicalBlock = buddy_allocator_alloc_block(physicalMemoryAllocator, alignedSize, alignment);
-    auto startPhysicalAddress = physicalBlock.startAddress;
-
-    if(startVirtualAddress % alignment) {
-        printf("Allocation error allocated page is not aligned to page boundary");
-        return nullptr;
-    }
-    size_t numDirectories = alignedSize / alignment;
-    auto pageDirectory = paging_get_active_page_directory();
-    for(size_t i = 0; i < numDirectories; i++) {
-        auto pd = &pageDirectory[pageDirectoryIdFromAddress(startVirtualAddress, i, alignment)];
-
-        if(pd->IsPresent()) {
-            printf("Attempting to map physical memory to already mapped page");
-            return nullptr;
-        }
-
-        pd->SetPresent(true);
-
-        if(flags & MAP_HUGETLB) {
-            pd->SetPhysical(true);
-        } else {
-            printf("mmap does not support omitting MAP_HUGETLB");
-            return nullptr;
-        }
-
-        if(prot & PROT_WRITE) {
-            pd->SetWriteEnabled(true);
-        }
-
-        pd->SetAddress(startPhysicalAddress + (alignment * i));
-    }
-
-    //printf("Mapped address: 0x%lX\n", startVirtualAddress);
-    return (void *)startVirtualAddress;
-}
-
-__cdecl int munmap(void* startAddress, size_t size) {
-    return i386_memory_munmap(startAddress, size);
-}
-
-__cdecl int i386_memory_munmap(void* startAddress, size_t size) {
-    size_t alignment = ALIGN_4MIB;
-    auto address = (uint32_t)startAddress;
-
-    if(address % alignment != 0) {
-        alignment = ALIGN_4KIB;
-        if(address % alignment != 0) {
-            return -1;
-        }
-    }
-
-    if(alignment == ALIGN_4KIB) {
-        printf("4KIB alignment not supporter in paging");
-        return -1;
-    }
-
-    size_t alignedSize = size - (size % alignment);
-    if(alignedSize != size) alignedSize += alignment;
-
-    auto pageDirectory = paging_get_active_page_directory();
-    auto numPages = alignedSize / alignment;
-    for(size_t i = 0; i < numPages; i++) {
-        auto pd = &pageDirectory[pageDirectoryIdFromAddress(address, i, alignment)];
-        if(pd->IsPresent()) {
-            pd->Clear();
-        } else {
-            return -1;
-        }
-    }
-
-    return 0;
+    memory_init(physicalMemoryAllocator, kernelVirtualMemoryAllocator);
 }
 
 __cdecl int test_memory(size_t testSize) {

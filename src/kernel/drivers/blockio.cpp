@@ -1,6 +1,6 @@
 #include <drivers/blockio.h>
 #include <stdio.h>
-#include <memory.h>
+#include <drivers/memory.h>
 #include <partition.h>
 #include <drivers/vfs.h>
 

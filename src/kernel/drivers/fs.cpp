@@ -1,7 +1,7 @@
 #include <drivers/fs.h>
 #include <stdio.h>
 #include <string.h>
-#include <memory.h>
+#include <drivers/memory.h>
 
 fs_driver_t** fsDrivers;
 
@@ -70,12 +70,6 @@ DIR* fs_openDir(fs_instance_t* instance, const char* dirName) {
 
 int fs_closeDir(fs_instance_t* instance, DIR* dirPtr) {
     fs_driver_t* driver = fsDrivers[instance->fsType];
-    printf("%x\n", (size_t)fsDrivers);
-    printf("%x\n", (size_t)dirPtr);
-    printf("%x\n", (size_t)instance);
-    printf("%i\n", instance->fsType);
-    printf("%x\n", (size_t)driver);
-    printf("%x\n", (size_t)driver->closeDirFn);
     if(driver == NULL) {
         printf("ERR: Attempted filesystem operation with unregistered filesystem driver\n");
         return -999;

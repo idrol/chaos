@@ -7,7 +7,8 @@
 #include <stdint.h>
 #include <cdecl.h>
 
-#ifdef __cplusplus
+#define pageDirectoryIdFromAddress(address, pageNumOffset, pageSize) ((address+(pageSize*pageNumOffset))/pageSize)
+
 
 struct PageDirectory {
     void Clear();
@@ -30,19 +31,10 @@ private:
     uint32_t data; // 32-bit bitmap
 }  __attribute__((packed));
 
-#define pageDirectoryIdFromAddress(address, pageNumOffset, pageSize) ((address+(pageSize*pageNumOffset))/pageSize)
-
-__cdecl PageDirectory* paging_kernel_page_directory;
-__cdecl PageDirectory* paging_active_page_directory;
-#else
-struct PageDirectory_struct;
-typedef struct PageDirectory_struct PageDirectory;
-
-extern PageDirectory* paging_kernel_page_directory;
-extern PageDirectory* paging_active_page_directory;
-#endif
-
-__cdecl void paging_set_active_page_directory(PageDirectory* pd);
-__cdecl PageDirectory* paging_get_active_page_directory();
-__cdecl size_t paging_get_physical_address(size_t virtualAddress);
-__cdecl PageDirectory* paging_clone_directory(PageDirectory* directory);
+__cdecl void i386_paging_setup_boot_directory(PageDirectory* pd);
+__cdecl void i386_paging_set_active_page_directory(PageDirectory* pd);
+__cdecl PageDirectory* i386_paging_get_active_page_directory();
+__cdecl size_t i386_paging_get_physical_address(size_t virtualAddress);
+__cdecl PageDirectory* i386_paging_clone_directory(PageDirectory* directory);
+__cdecl bool i386_paging_map_address_range(size_t physicalStart, size_t virtualStart, size_t size, size_t alignment);
+__cdecl bool i386_paging_unmap_address_range(size_t virtualStart, size_t size, size_t alignment);

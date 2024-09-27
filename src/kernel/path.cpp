@@ -1,6 +1,6 @@
 #include "path.h"
 #include <stdio.h>
-#include <memory.h>
+#include <drivers/memory.h>
 
 char* path_sanitize(char* path) {
     size_t len = strlen(path);

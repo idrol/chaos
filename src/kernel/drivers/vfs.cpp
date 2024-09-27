@@ -1,6 +1,6 @@
 #include <drivers/vfs.h>
 #include <drivers/thread.h>
-#include <memory.h>
+#include <drivers/memory.h>
 #include <panic.h>
 #include <stdio.h>
 #include <string.h>

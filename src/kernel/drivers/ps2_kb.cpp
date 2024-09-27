@@ -6,7 +6,7 @@
 #include <drivers/io.h>
 #include <stdio.h>
 #include <keys.h>
-#include <memory.h>
+#include <drivers/memory.h>
 #include <string.h>
 #include <tty.h>
 
