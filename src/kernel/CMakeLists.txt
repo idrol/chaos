@@ -16,7 +16,7 @@ include(sources.cmake)
 message("${CHAOS_LIBC_SRCS}")
 add_executable(kernel ${PLATFORM_BOOT_SRC} ${ISA_SRCS} ${PLATFORM_SRCS} ${KERNEL_SRCS} ${CHAOS_LIBC_SRCS})
 
-target_link_libraries(kernel gcc)
+target_link_libraries(kernel ${CMAKE_CURRENT_SOURCE_DIR}/font/zap-light16.o gcc)
 
 target_include_directories(kernel PRIVATE ${PROJECT_SOURCE_DIR}/include/libc ${PROJECT_SOURCE_DIR}/include/kernel)
 

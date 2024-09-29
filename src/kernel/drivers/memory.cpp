@@ -19,6 +19,32 @@ __cdecl void memory_init(buddy_allocator_t* _physicalAllocator, buddy_allocator_
     activeVirtualAllocator = kernelVirtualAllocator;
 }
 
+__cdecl void* map_physical_address_space(size_t physicalAddress, size_t size, size_t alignment)
+{
+    if(physicalAddress % alignment != 0)
+    {
+        printf("Attempting to map physical address space with non aligned physical address %Xl\n", alignment);
+        return nullptr;
+    }
+    if(size % alignment != 0)
+    {
+        printf("Attempting to map physical address space with non aligned size %Xl\n", size);
+        return nullptr;
+    }
+
+    buddy_allocator_set_allocated(physicalAllocator, physicalAddress, size);
+    auto virtualBlock = buddy_allocator_alloc_block(activeVirtualAllocator, size, alignment);
+    auto virtualStart = virtualBlock.startAddress;
+
+    if(!paging_map_address_range(physicalAddress, virtualStart, size, alignment))
+    {
+        return nullptr;
+    }
+
+    return (void*)virtualStart;
+}
+
+
 __cdecl void* mmap(void* addressHint, size_t size, int prot, int flags) {
     size_t alignment = ALIGN_4KIB;
 

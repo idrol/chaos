@@ -1,7 +1,7 @@
 .set ALIGN,    1<<0             /* align loaded modules on page boundaries */
 .set MEMINFO,  1<<1             /* provide memory map */
 .set ENABLE_VIDEO, 1<<2          /* Enable video framebuffer */
-.set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
+.set FLAGS,    ALIGN | MEMINFO | ENABLE_VIDEO  /* this is the Multiboot 'flag' field */
 .set MAGIC,    0x1BADB002       /* 'magic number' lets bootloader find the header */
 .set CHECKSUM, -(MAGIC + FLAGS) /* checksum of above, to prove we are multiboot */
  
@@ -19,8 +19,8 @@
 .long 0
 
 .long 0
-.long 1024
-.long 768
+.long 1920
+.long 1080
 .long 32
  
  .section .bootstack, "aw", @nobits

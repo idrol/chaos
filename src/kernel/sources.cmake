@@ -18,5 +18,7 @@ set(KERNEL_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/ata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/serial.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/paging.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/gfx.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/sh.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/font/font.cpp
 )

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <tty.h>
 #include <drivers/memory.h>
+#include <drivers/gfx.h>
 
 uint32_t vga_row;
 uint32_t  vga_column;
@@ -21,6 +22,7 @@ const uint32_t VGA_WIDTH = 80;
 const uint32_t VGA_HEIGHT = 25;
 
 bool cursor_enabled = true;
+bool initialized = false;
 
 __cdecl void i386_vga_init() {
     vga_row = 0;
@@ -28,16 +30,19 @@ __cdecl void i386_vga_init() {
     vga_color = i386_vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     vga_buffer = (uint16_t*)0xC00B8000;
 
+    initialized = true;
     i386_vga_clear();
 }
 
 __cdecl void i386_vga_init_memory() {
+    if(!initialized) return;
     text_buffer = (uint8_t*)kmalloc(BUFFER_SIZE);
     memset(text_buffer, 0x0, BUFFER_SIZE);
     //i386_vga_clear();
 }
 
 __cdecl void i386_vga_clear() {
+    if(!initialized) return;
     for(uint32_t y = 0; y < VGA_HEIGHT; y++) {
         for(uint32_t x = 0; x < VGA_WIDTH; x++) {
             const uint32_t index = y * VGA_WIDTH + x;
@@ -62,6 +67,7 @@ __cdecl uint16_t i386_vga_entry(uint8_t uc, uint8_t color) {
 }
 
 __cdecl void i386_vga_enable_cursor(uint8_t start, uint8_t end) {
+    if(!initialized) return;
     i386_hal_io_outb(0x3D4, 0x0A);
     i386_hal_io_outb(0x3D5, (i386_hal_io_inb(0x3D5) & 0xC0) | start);
 
@@ -71,12 +77,14 @@ __cdecl void i386_vga_enable_cursor(uint8_t start, uint8_t end) {
 }
 
 __cdecl void i386_vga_disable_cursor() {
+    if(!initialized) return;
     i386_hal_io_outb(0x3D4, 0x0A);
     i386_hal_io_outb(0x3D5, 0x20);
     cursor_enabled = false;
 }
 
 __cdecl void i386_vga_set_cursor_pos(uint8_t x, uint8_t y) {
+    if(!initialized) return;
     if(cursor_enabled) {
         uint16_t pos = y * VGA_WIDTH + x;
         i386_hal_io_outb(0x3D4, 0x0F);
@@ -87,6 +95,7 @@ __cdecl void i386_vga_set_cursor_pos(uint8_t x, uint8_t y) {
 }
 
 __cdecl void i386_vga_put_entry_at(char c, uint8_t color, uint8_t x, uint8_t y) {
+    if(!initialized) return;
     const uint32_t index = y * VGA_WIDTH + x;
     vga_buffer[index] = i386_vga_entry(c, color);
 }
@@ -122,6 +131,7 @@ __cdecl size_t text_buffer_line_backtrace(uint8_t* buffer, size_t bufferSize, si
 }
 
 __cdecl void i386_vga_rerender_text_buffer() {
+    if(!initialized) return;
     i386_vga_clear();
     charactersSinceRerender = 0;
     size_t numLines = 0;
@@ -154,6 +164,7 @@ __cdecl void i386_vga_rerender_text_buffer() {
 }
 
 __cdecl void i386_vga_put_char(char c) {
+    if(!initialized) return;
     if(text_buffer != NULL) {
         if(c == '\b')
         {
@@ -214,25 +225,33 @@ __cdecl void i386_vga_put_char(char c) {
 }
 
 __cdecl void i386_vga_write(const char* data, uint32_t size) {
+    if(!initialized) return;
     for(uint32_t i = 0; i < size; i++) {
         i386_vga_put_char(data[i]);
     }
 }
 
 __cdecl void i386_vga_write_string(const char* data) {
+    if(!initialized) return;
     i386_vga_write(data, strlen(data));
 }
 
 __cdecl void i386_vga_new_line() {
+    if(!initialized) return;
     i386_vga_put_char('\n');
 }
 
 __cdecl void i386_vga_write_line(const char* data) {
+    if(!initialized) return;
     i386_vga_write_string(data);
     i386_vga_new_line();
 }
 
 __cdecl void tty_put_char(const int character) {
-    i386_vga_put_char((const char)character);
+    if(initialized)
+    {
+        i386_vga_put_char((const char)character);
+    }
+    gfx_putc(character);
     i386_write_serial((char)character);
 }

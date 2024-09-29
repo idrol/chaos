@@ -35,6 +35,7 @@ __cdecl void memory_init(buddy_allocator_t* physicalAllocator, buddy_allocator_t
 
 __cdecl void* mmap(void* addressHint, size_t size, int prot, int flags);
 __cdecl int   munmap(void* startAddress, size_t size);
+__cdecl void* map_physical_address_space(size_t physicalAddress, size_t size, size_t alignment);
 
 __cdecl void* kmalloc(size_t size);
 __cdecl void  kfree(void* address);

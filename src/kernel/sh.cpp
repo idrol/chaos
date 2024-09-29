@@ -100,6 +100,8 @@ void handle_command(int argc, char** argv)
 void kernel_sh()
 {
     while (true) {
+        auto pwd = getenv("pwd");
+        printf("%s > ", pwd);
         const char* command = getline();
         char tmpBuffer[2048] = {};
         strcpy(tmpBuffer, command);

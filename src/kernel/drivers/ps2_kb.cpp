@@ -203,8 +203,6 @@ void ps2_kb_init()
 
 const char* getline()
 {
-    tty_put_char('>');
-    tty_put_char(' ');
     kb_device->getLineActive = true;
     kb_device->getLineStart = kb_device->bufferPos;
     kb_device->getLineLength = 0;

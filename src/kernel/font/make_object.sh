@@ -1,0 +1,1 @@
+objcopy -O elf32-i386 -B i386 -I binary zap-light16.psf zap-light16.o

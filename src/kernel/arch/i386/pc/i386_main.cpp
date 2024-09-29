@@ -22,9 +22,11 @@
 #include <drivers/vfs.h>
 #include <drivers/io.h>
 #include <drivers/ata.h>
+#include <drivers/gfx.h>
 #include <drivers/ps2_kb.h>
 #include <drivers/serial.h>
 #include <drivers/paging.h>
+#include <font.h>
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -46,6 +48,25 @@ void* framebuffer_addr = nullptr;
 void framebuffer_draw()
 {
 
+}
+
+void fillrect(unsigned char *vram,
+              unsigned char r, unsigned char g, unsigned char b,
+              int x, int y, int w, int h,
+              int pixelWidth, int pitch) {
+    unsigned char *where = vram;
+    int i, j;
+
+    where += y*pitch + x*pixelWidth;
+    for (i = 0; i < w; i++) {
+        for (j = 0; j < h; j++) {
+            //putpixel(vram, 64 + j, 64 + i, (r << 16) + (g << 8) + b);
+            where[j*pixelWidth + 2] = r;
+            where[j*pixelWidth + 1] = g;
+            where[j*pixelWidth] = b;
+        }
+        where+=pitch;
+    }
 }
 
 extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t* boot_page_directory, uint32_t stack_top, uint32_t stack_bottom)
@@ -94,6 +115,36 @@ extern "C" void kernel_i386_main(multiboot_info_t *mbd, uint32_t magic, uint32_t
     i386_tasking_init();
 
     i386_vga_init_memory();
+
+    init_font();
+    if(mbd->flags & 0x1<<12)
+    {
+        if(mbd->framebuffer_type != 2)
+        {
+            auto fbSize = mbd->framebuffer_height*mbd->framebuffer_pitch;
+            auto alignedFbSize = fbSize - (fbSize % ALIGN_4MIB);
+            auto bytesPerPixel = mbd->framebuffer_bpp/8;
+            if(mbd->framebuffer_bpp%8 != 0)
+            {
+                bytesPerPixel+=1;
+            }
+            if(alignedFbSize != fbSize)
+            {
+                alignedFbSize += ALIGN_4MIB;
+            }
+            auto framebuffer = map_physical_address_space((size_t)mbd->framebuffer_addr, alignedFbSize, ALIGN_4MIB);
+            uint8_t colorMode = 0;
+            if(mbd->framebuffer_red_field_position == 0)
+            {
+                colorMode = COLOR_MODE_RGBA;
+            } else if(mbd->framebuffer_blue_field_position == 0)
+            {
+                colorMode = COLOR_MODE_BGRA;
+            }
+            gfx_init((size_t)framebuffer, mbd->framebuffer_width, mbd->framebuffer_height, bytesPerPixel, mbd->framebuffer_pitch, colorMode);
+            //fillrect((unsigned char*)framebuffer, 0xEC, 0x55, 0x35, 20, 20, 50, 50, bytesPerPixel, mbd->framebuffer_pitch);
+        }
+    }
 
     thread_init();
     block_init();
