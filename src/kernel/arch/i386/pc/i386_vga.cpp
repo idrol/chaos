@@ -2,6 +2,9 @@
 // Created by Idrol on 14/05/2023.
 //
 #include "i386_vga.h"
+
+#include <ctype.h>
+
 #include "i386_hal.h"
 #include "i386_serial.h"
 #include <string.h>

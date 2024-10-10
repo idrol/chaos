@@ -56,11 +56,73 @@ void change_directory(int argc, char** argv)
 
 void list_directory(int argc, char** argv)
 {
+    bool listAll = false;
+    bool longListMode = false;
     auto pwd = getenv("pwd");
-    auto dir = vfs_openDir(pwd);
+    const char* listPath = pwd;
+    if(argc > 1)
+    {
+        for(int i = 1; i < argc; i++)
+        {
+            char* argument = argv[i];
+            size_t argLength = strlen(argument);
+            bool shortHandParam = false;
+            bool longHandParam = false;
+            for(size_t pos = 0; pos < argLength; pos++)
+            {
+                if(pos == 0)
+                {
+                    if(argument[pos] == '-') {
+                        shortHandParam = true;
+                    } else
+                    {
+                        listPath = argument;
+                        break;
+                    }
+                } else
+                {
+                    if(pos == 1 && argument[pos] == '-' && shortHandParam == true) {
+                        shortHandParam = false;
+                        longHandParam = true;
+                        continue;
+                    }
+
+                    if(shortHandParam)
+                    {
+                        switch (argument[pos])
+                        {
+                            case 'a':
+                                listAll = true;
+                                break;
+                            case 'l':
+                                longListMode = true;
+                                break;
+                        }
+                    } else if(longHandParam)
+                    {
+                        if(strequal(&argument[2], "all"))
+                        {
+                            listAll = true;
+                        } else
+                        {
+                            printf("Unrecognized option %s\n", argument);
+                            return;
+                        }
+                    } else
+                    {
+                        printf("Unrecognized option %s\n", argument);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+
+    auto dir = vfs_openDir(listPath);
     if(dir == NULL)
     {
-        printf("ls: Current working directory is not valid %s\n", pwd);
+        printf("ls: %s is not a valid path\n", pwd);
         return;
     }
     int length = 0;
@@ -68,19 +130,29 @@ void list_directory(int argc, char** argv)
     bool isEmpty = true;
     while(dirEntry != NULL)
     {
-        isEmpty = false;
-        auto strLength = strlen(dirEntry->name) + 2;
-        length += strLength;
-        if(length >= 80)
+        if(dirEntry->name[0] == '.' && !listAll)
         {
-            printf("\n");
-            length = strLength;
+            dirEntry = vfs_readDir(dir);
+            continue;
         }
-        printf("%s  ", dirEntry->name);
+        isEmpty = false;
+        if(longListMode)
+        {
+            printf("  %s\n", dirEntry->name);
+        } else {
+            auto strLength = strlen(dirEntry->name) + 2;
+            length += strLength;
+            if(length >= 80)
+            {
+                printf("\n");
+                length = strLength;
+            }
+            printf("%s  ", dirEntry->name);
+        }
         dirEntry = vfs_readDir(dir);
     }
     vfs_closeDir(dir);
-    if(!isEmpty) printf("\n");
+    if(!isEmpty && !longListMode) printf("\n");
 }
 
 void handle_command(int argc, char** argv)
@@ -105,7 +177,7 @@ void kernel_sh()
         const char* command = getline();
         char tmpBuffer[2048] = {};
         strcpy(tmpBuffer, command);
-        toLower(tmpBuffer);
+        //st(tmpBuffer);
         argc = (int)strcountchar(tmpBuffer, ' ')+1;
         argv = (char**)kmalloc(sizeof(char*)*argc);
         int start = 0;

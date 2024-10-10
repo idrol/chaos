@@ -300,7 +300,7 @@ fs_dir_entry_t* fat_get_next_directory_entry_from_stream(fs_instance_t* instance
                 directoryStream->currentEntry.name[nameLength] = '\0';
                 nameLength++;
                 directoryStream->currentEntry.nameLen = nameLength;
-                toLower(directoryStream->currentEntry.name);
+                strtolower(directoryStream->currentEntry.name);
                 //printf("Short name: %s\n", directoryStream->currentEntry.name);
 
                 /*memcpy(directoryStream->currentEntry.name, dirEnt->fileName, 8);

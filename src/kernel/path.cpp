@@ -1,5 +1,6 @@
 #include "path.h"
 #include <stdio.h>
+#include <ctype.h>
 #include <drivers/memory.h>
 
 char* path_sanitize(char* path) {

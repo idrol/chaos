@@ -1,6 +1,7 @@
 //
 // Created by Idrol on 21/09/2024.
 //
+#include <ctype.h>
 #include <drivers/ps2_kb.h>
 #include <drivers/interrupts.h>
 #include <drivers/io.h>
@@ -11,7 +12,7 @@
 #include <tty.h>
 
 ps2_keyboard_device_t* kb_device = nullptr;
-char getLineBuffer[4096];
+uint8_t getLineBuffer[4096];
 
 uint32_t CodeSet1Buffer[128] = {
     0x0, KEY_ESCAPE, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5,
@@ -139,51 +140,75 @@ void ps2_kb_irq_handler(uint32_t irq, device_entry_t* device)
                 action = ACTION_REPEAT;
             }
         }
+
+        kb_device->keyStates[key] = action;
+
+        if(action == ACTION_RELEASE){
+            // Release
+            if(key == KEY_LEFT_ALT || key == KEY_RIGHT_ALT)
+            {
+                if(kb_device->keyStates[KEY_LEFT_ALT] == ACTION_RELEASE &&
+                   kb_device->keyStates[KEY_RIGHT_ALT] == ACTION_RELEASE) {
+
+                    kb_device->modifiers &= ~(0x1 << 2);
+                   }
+            } else if(key == KEY_LEFT_SHIFT || key == KEY_RIGHT_SHIFT)
+            {
+                if(kb_device->keyStates[KEY_LEFT_SHIFT] == ACTION_RELEASE &&
+                   kb_device->keyStates[KEY_RIGHT_SHIFT] == ACTION_RELEASE) {
+
+                    kb_device->modifiers &= ~(0x1 << 1);
+                   }
+            } else if(key == KEY_LEFT_CONTROL || key == KEY_RIGHT_CONTROL)
+            {
+                if(kb_device->keyStates[KEY_LEFT_CONTROL] == ACTION_RELEASE &&
+                   kb_device->keyStates[KEY_RIGHT_CONTROL] == ACTION_RELEASE) {
+
+                    kb_device->modifiers &= ~((uint8_t)0x1);
+                   }
+
+            }
+        }
+
         if(action == ACTION_PRESS || action == ACTION_REPEAT)
         {
             uint8_t letter = key;
-            if(key == KEY_BACKSPACE)
+            bool isModifier = false;
+            if(key == KEY_ENTER || key == KEY_KP_ENTER)
             {
-                if(kb_device->bufferPos == 0)
-                {
-                    kb_device->bufferPos = 4095;
-                } else {
-                    kb_device->bufferPos--;
-                }
-                kb_device->buffer[kb_device->bufferPos] = 0x0;
-                if(kb_device->getLineActive)
-                {
-
-                    if(kb_device->getLineLength > 0)
-                    {
-                        kb_device->getLineLength--;
-                    }
-
-                }
-            } else
+                letter = '\n';
+            } else if(key == KEY_BACKSPACE)
             {
-                if(key == KEY_ENTER || key == KEY_KP_ENTER)
-                {
-                    letter = '\n';
-                }
-
-                kb_device->buffer[kb_device->bufferPos] = letter;
-                if(kb_device->getLineActive)
-                {
-
-                    kb_device->getLineLength++;
-                }
-                kb_device->bufferPos++;
-                if(kb_device->bufferPos >= 4096) kb_device->bufferPos = 0;
-                if(letter == '\n')
-                {
-                    kb_device->getLineActive = false; // disable getline
-                }
+                letter = '\b';
+            } else if(key == KEY_LEFT_ALT || key == KEY_RIGHT_ALT)
+            {
+                isModifier = true;
+                kb_device->modifiers |= 0x1 << 2;
+            } else if(key == KEY_LEFT_SHIFT || key == KEY_RIGHT_SHIFT)
+            {
+                isModifier = true;
+                kb_device->modifiers |= 0x1 << 1;
+            } else if(key == KEY_LEFT_CONTROL || key == KEY_RIGHT_CONTROL)
+            {
+                isModifier = true;
+                kb_device->modifiers |= 0x1;
             }
 
+            if(!isModifier) {
+                bool isShiftActive = kb_device->modifiers >> 1 & 0x1;
+                if(isalpha(letter) && !isShiftActive)
+                {
+                    letter = tolower(letter);
+                }
+                kb_device->buffer[kb_device->bufferPos] = letter;
+                kb_device->bufferPos++;
+                if(kb_device->bufferPos >= 4096) kb_device->bufferPos = 0;
+            }
         }
 
-        kb_device->keyStates[key] = action;
+
+
+
     }
     //printf("Keyboard 0x%X\n", scanCode);
 }
@@ -203,33 +228,53 @@ void ps2_kb_init()
 
 const char* getline()
 {
-    kb_device->getLineActive = true;
-    kb_device->getLineStart = kb_device->bufferPos;
-    kb_device->getLineLength = 0;
-    uint32_t lastLength = 0;
-    while(kb_device->getLineActive)
+    memset(getLineBuffer, 0x0, 4096);
+    uint32_t lineBufferOffset = 0;
+    uint32_t lastBufferPos = 0;
+    if(kb_device->bufferPos == 0)
+    {
+        lastBufferPos = 4095;
+    } else
+    {
+        lastBufferPos = kb_device->bufferPos-1;
+    }
+    while(true)
     {
         io_halt();// wait until getline deactivates
-        if(kb_device->getLineLength > lastLength)
+        uint8_t pos = 0;
+        if(kb_device->bufferPos == 0)
         {
-            // Add char
-            tty_put_char(kb_device->buffer[kb_device->getLineStart+(kb_device->getLineLength-1)]);
-        } else if(kb_device->getLineLength < lastLength)
+            pos = 4095;
+        } else
         {
-            tty_put_char('\b');
-            // Remove char
+            pos = kb_device->bufferPos-1;
         }
-        lastLength = kb_device->getLineLength;
-    }
-    memset(getLineBuffer, 0x0, 4096);
-    int lineBufferOffset = 0;
-    for(int i = kb_device->getLineStart; i < kb_device->getLineStart+kb_device->getLineLength; i++)
-    {
-        int actualIndex = i%4096;
-        getLineBuffer[lineBufferOffset] = kb_device->buffer[actualIndex];
+        if(pos == lastBufferPos) continue; // Key event did not add anything to read buffer
+        lastBufferPos = pos;
+        uint8_t letter = kb_device->buffer[pos];
+        if(isprint(letter))
+        {
+            getLineBuffer[lineBufferOffset] = letter;
+            lineBufferOffset++;
+            tty_put_char(letter);
+        } else
+        {
+            if(letter == '\b')
+            {
+                if(lineBufferOffset > 0)
+                {
+                    lineBufferOffset--;
+                    getLineBuffer[lineBufferOffset] = 0x0;
+                    tty_put_char(letter);
+                }
+            } else if(letter == '\n')
+            {
+                getLineBuffer[lineBufferOffset] = 0x0;
+                lineBufferOffset++;
+                tty_put_char(letter);
+            }
+        }
 
-        lineBufferOffset++;
+        if(letter == '\n') return (char*)getLineBuffer;
     }
-    getLineBuffer[kb_device->getLineLength-1] = 0x0;
-    return getLineBuffer;
 }

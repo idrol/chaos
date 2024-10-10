@@ -3,11 +3,13 @@
 //
 #pragma once
 
+#include <drivers/fs.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <HashMap.h>
 
 #define MAX_PROCESSES 65536
+#define MAX_FILE_DESCRIPTORS_PER_PROCESS 1024
 
 struct Thread
 {
@@ -18,6 +20,8 @@ struct Thread
 
     uint32_t envSize = 0;
     char** env = nullptr;
+
+    fs_file_descriptor_t* file_descriptors[MAX_FILE_DESCRIPTORS_PER_PROCESS];
 
     Thread* nextThread = nullptr;
 };

@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <string.h>
 
 __cdecl bool strequal(const char* str1, const char* str2) {
@@ -113,17 +114,15 @@ __cdecl int32_t strncmp(const char* str1, const char* str2, size_t count) {
     return str1[offset]-str2[offset];
 }
 
-__cdecl int isspace(char c) {
-    if(c == 0x20) return 1;
-    if(c == 0x09) return 1;
-    if(c == 0x0a) return 1;
-    if(c == 0x0b) return 1;
-    if(c == 0x0c) return 1;
-    if(c == 0x0d) return 1;
-    return 0;
+__cdecl void strtolower(char* str) {
+    for(char *p = str; *p; ++p)
+        if(isupper(*p)) *p = (char)tolower(*p);
 }
 
-__cdecl void toLower(char* str) {
+__cdecl void strtoupper(char* str)
+{
     for(char *p = str; *p; ++p)
-        *p = *p > 0x40 && *p < 0x5b ? *p | 0x60 : *p;
+    {
+        if(islower(*p)) *p = (char)toupper(*p);
+    }
 }

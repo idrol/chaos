@@ -17,6 +17,15 @@
 #define NAME_MAX 256
 #define FS_NAME_MAX NAME_MAX
 #define FS_INITIAL_BUFFER_SIZE 2048
+#define FS_DESCRIPTOR_BUFFER_SIZE 1024
+
+#define O_RDONLY 0x1
+#define O_WRONLY 0x1 << 1
+#define O_RDWR 0x3
+#define O_APPEND 0x1 << 2
+#define O_CREATE 0x1 << 3
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,12 +78,14 @@ struct fs_file_descriptor_struct {
     char fileName [FS_NAME_MAX];
     uint16_t fileNameLength;
 
-    bool writeEnabled;
+    uint32_t openFlags;
     size_t fileSize;
-    size_t readOffset;
+    // Cursors for underlying file
+    size_t readCursor;
+    size_t writeCursor;
 
-    void* readBuffer;
-    void* writeBuffer;
+    uint8_t writeBuffer[FS_DESCRIPTOR_BUFFER_SIZE];
+    size_t writeBufferCursor;
 
     void* implPtr;
 };

@@ -39,9 +39,7 @@ struct ps2_keyboard_device_t
     ScancodeSet* scancodeSet = nullptr;
     uint32_t bufferPos = 0;
     uint8_t* buffer;
-    bool getLineActive = false;
-    uint32_t getLineStart = 0;
-    uint32_t getLineLength = 0;
+    uint8_t modifiers = 0x0; // Bit 0 = Ctrl, Bit 1 = Shift, Bit 2 = ALT, Bit 3 = Caps lock
 };
 
 void ps2_kb_init();
